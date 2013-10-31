@@ -6,7 +6,31 @@ import java.util.EmptyStackException;
 import java.util.List;
 import java.util.Stack;
 
-public class ParallelQuicksort<T> {
+/**
+ * This class encapsulates a Parallel Quicksort algorithm.
+ * 
+ * In practice, it appears to scale well up to a small number
+ * of processors when run against a list with millions of
+ * elements that consist of a diverse set of values. Multi-process 
+ * executions have been demonstrated to be considerably faster than
+ * the standard Collecions.sort(), which is implemented
+ * as a sequential mergesort, under the conditions described
+ * above.
+ * 
+ * The algorithm sorts the given list 'in-place,' however
+ * a stack is utilized in lieu of recursion. The bounds
+ * pushed onto this stack do represent a small amount of
+ * additional memory required to perform the sort.
+ * 
+ * Being based on Quicksort, lists that are mostly
+ * sorted, and lists with low variance of values will
+ * run extremely slow.
+ * 
+ * @author broadbear
+ *
+ * @param <T>
+ */
+public final class ParallelQuicksort<T> {
 	int P;
 	int n;
 	int minPartition;
@@ -16,33 +40,60 @@ public class ParallelQuicksort<T> {
 	boolean stop;
 	int waiting;
 
+	/**
+	 * Sorts the given List based on the given Comparator instance.
+	 * 
+	 * @param P the number of child threads to instantiate.
+	 * @param minPartition the smallest run of list elements to sort via the parallel 
+	 * quicksort algorithm. Runs smaller than this number are sorted via a sequential insertion sort.
+	 * @param a the list to sort. The given list is sorted 'in-place.'
+	 * @param c a comparator instance to determine the sort order of individual elements.
+	 */
 	public static <T> void sort(int P, int minPartition, final List<T> a, Comparator<? super T> c) {
 		ParallelQuicksort<T> sorter = new ParallelQuicksort<T>(P, minPartition, c);
 		sorter.parentSort(a);
 	}
-	
+
+	/**
+	 * Sorts the given List based on the list elements' natural ordering.
+	 * The list elements must inherit the Comparable interface.
+	 * 
+	 * @param P the number of child threads to instantiate.
+	 * @param minPartition the smallest run of list elements to sort via the parallel 
+	 * quicksort algorithm. Runs smaller than this number are sorted via a sequential insertion sort.
+	 * @param a the list to sort. The given list is sorted 'in-place.'
+	 */
 	public static <T extends Comparable<? super T>> void sort(int P, int minPartition, final List<T> a) {
 		ParallelQuicksort<T> sorter = new ParallelQuicksort<T>(P, minPartition);
 		sorter.parentSort(a);
 	}
 	
+
+	/**
+	 * Sorts the given List based on the list elements' natural ordering.
+	 * The list elements must inherit the Comparable interface. This method
+	 * uses Java Runtime to configure the sort algorithm to use a number of 
+	 * processes equal to processors reported by the system.
+	 * 
+	 * @param a the list to sort. The given list is sorted 'in-place.'
+	 */
 	public static <T extends Comparable<? super T>> void sort(final List<T> a) {
 		ParallelQuicksort<T> sorter = new ParallelQuicksort<T>();
 		sorter.parentSort(a);
 	}
 	
-	private ParallelQuicksort(int p, int minPartition, Comparator<? super T> c) {
+	ParallelQuicksort(int p, int minPartition, Comparator<? super T> c) {
 		this.P = p;
 		this.minPartition = minPartition;
 		this.c = c;
 	}
 	
-	private ParallelQuicksort(int p, int minPartition) {
+	ParallelQuicksort(int p, int minPartition) {
 		this.P = p;
 		this.minPartition = minPartition;
 	}
 	
-	private ParallelQuicksort() {
+	ParallelQuicksort() {
 		this.P = Runtime.getRuntime().availableProcessors();
 		this.minPartition = 0;
 	}
