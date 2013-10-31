@@ -2,9 +2,11 @@ package org.mike.drivers;
 
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+
+import org.mike.sort.ParallelQuicksort;
 
 
 /**
@@ -39,7 +41,13 @@ public class Driver {
 //		System.out.println("sort checks out");
 //		System.out.println("time ["+(endTime - startTime)+"]");
 		
-		int mean = test();
+		int mean = test(3);
+		System.out.println("mean ["+mean+"]");
+		mean = test(2);
+		System.out.println("mean ["+mean+"]");
+		mean = test(3);
+		System.out.println("mean ["+mean+"]");
+		mean = test(4);
 		System.out.println("mean ["+mean+"]");
 		
 //		PSRSSort psrsSort = new PSRSSort(3);
@@ -84,18 +92,25 @@ public class Driver {
 		}
 	}
 	
-	public static int test() {
+	public static int test(int p) {
 		List<Integer> times = new ArrayList<Integer>();
 		
 		for(int i = 0; i < 100; i++) {
 			List<Integer> list = Driver.createList(4000000);
 			long startTime = System.currentTimeMillis();
-			Collections.sort(list);
-//			ParallelQuicksort.sort(2, 1000, list);
+//			Collections.sort(list);
+			ParallelQuicksort.sort(p, 1000, list, new Comparator<Integer>() {
+				@Override
+				public int compare(Integer o1, Integer o2) {
+					return o1.compareTo(o2);
+				}
+			});
 			long endTime = System.currentTimeMillis();
 			long time = endTime - startTime;
 			System.out.println("iteration ["+i+"] time ["+time+"]");
 			times.add((int)(time));
+			verify(list);
+			System.out.println("sort checks out");
 		}
 		
 		List<Integer> sample = getSample(32, times);

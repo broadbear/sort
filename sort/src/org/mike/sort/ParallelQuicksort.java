@@ -1,28 +1,40 @@
 package org.mike.sort;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EmptyStackException;
 import java.util.List;
 import java.util.Stack;
 
-public class ParallelQuicksort {
+public class ParallelQuicksort<T> {
 	int P;
 	int n;
-	List<Integer> a;
 	int minPartition;
 	Stack<Bound> stack;
+	Comparator<? super T> c;
 	
 	boolean stop;
 	int waiting;
-	
-	public static void sort(int P, int minPartition, final List<Integer> a) {
-		ParallelQuicksort sorter = new ParallelQuicksort(P, minPartition);
+
+	public static <T> void sort(int P, int minPartition, final List<T> a, Comparator<? super T> c) {
+		ParallelQuicksort<T> sorter = new ParallelQuicksort<T>(P, minPartition, c);
 		sorter.parentSort(a);
 	}
 	
-	public static void sort(final List<Integer> a) {
-		ParallelQuicksort sorter = new ParallelQuicksort();
+	public static <T extends Comparable<? super T>> void sort(int P, int minPartition, final List<T> a) {
+		ParallelQuicksort<T> sorter = new ParallelQuicksort<T>(P, minPartition);
 		sorter.parentSort(a);
+	}
+	
+	public static <T extends Comparable<? super T>> void sort(final List<T> a) {
+		ParallelQuicksort<T> sorter = new ParallelQuicksort<T>();
+		sorter.parentSort(a);
+	}
+	
+	private ParallelQuicksort(int p, int minPartition, Comparator<? super T> c) {
+		this.P = p;
+		this.minPartition = minPartition;
+		this.c = c;
 	}
 	
 	private ParallelQuicksort(int p, int minPartition) {
@@ -35,10 +47,10 @@ public class ParallelQuicksort {
 		this.minPartition = 0;
 	}
 
-	void parentSort(final List<Integer> a) {
+	void parentSort(final List<T> a) {
 		n = a.size();
-		this.a = a;
-		initializeStack();
+//		this.a = a;
+		initializeStack(n);
 		
 		stop = false;
 		waiting = 0;
@@ -47,7 +59,7 @@ public class ParallelQuicksort {
 		for (int p = 0; p < P; p++) {
 			Thread t = new Thread(new Runnable() {
 				public void run() {
-					doSort();
+					childSort(a);
 				}
 			});
 			t.start();
@@ -63,7 +75,7 @@ public class ParallelQuicksort {
 		}		
 	}
 	
-	void doSort() {
+	void childSort(List<T> a) {
 		Bound bounds;
 		int median;
 		
@@ -71,11 +83,21 @@ public class ParallelQuicksort {
 			bounds = stackDelete();
 			while (bounds.low < bounds.high) {
 				if (bounds.high - bounds.low < minPartition) {
-					SequentialSort.insertionSort(a, bounds.low, bounds.high);
+					if (c == null) {
+						SequentialSort.insertionSort(a, bounds.low, bounds.high);
+					}
+					else {
+						SequentialSort.insertionSort(a, bounds.low, bounds.high, c);
+					}
 					break;
 				}
 				else {
-					median = partition(a, bounds.low, bounds.high);
+					if (c == null) {
+						median = partition(a, bounds.low, bounds.high);
+					}
+					else {
+						median = partition(a, bounds.low, bounds.high, c);
+					}
 					stackInsert(median + 1, bounds.high);
 //					System.out.println("t["+Thread.currentThread().getName()+"] bounds "+bounds+" median ["+median+"]");
 					if (median <= bounds.low) {
@@ -89,9 +111,9 @@ public class ParallelQuicksort {
 		}
 	}
 	
-	void initializeStack() {
+	void initializeStack(int n) {
 		stack = new Stack<Bound>();
-		Bound b = createBound(0, a.size() - 1);
+		Bound b = createBound(0, n - 1);
 		stack.push(b);
 	}
 	
@@ -124,13 +146,28 @@ public class ParallelQuicksort {
 		}
 	}
 
-	int partition(List<Integer> a, int left, int right) {
+	static <T> int partition(List<T> a, int left, int right) {
 		int pivotIndex = left;
-		Integer pivotValue = a.get(pivotIndex);
+		Comparable pivotValue = (Comparable) a.get(pivotIndex);
 		swap(a, pivotIndex, right);
 		int storeIndex = left;
 		for (int i = left; i <= right - 1; i++) {
-			if (a.get(i) <= pivotValue) {
+			if (((Comparable) a.get(i)).compareTo(pivotValue) <= 0) {
+				swap(a, i, storeIndex);
+				storeIndex = storeIndex + 1;
+			}
+		}
+		swap(a, storeIndex, right);
+		return storeIndex;
+	}
+
+	int partition(List<T> a, int left, int right, Comparator<? super T> c) {
+		int pivotIndex = left;
+		T pivotValue = a.get(pivotIndex);
+		swap(a, pivotIndex, right);
+		int storeIndex = left;
+		for (int i = left; i <= right - 1; i++) {
+			if (c.compare(a.get(i), pivotValue) <= 0) {
 				swap(a, i, storeIndex);
 				storeIndex = storeIndex + 1;
 			}
@@ -139,10 +176,10 @@ public class ParallelQuicksort {
 		return storeIndex;
 	}
 	
-	void swap(List<Integer> a, int i1, int i2) {
-		Integer temp = a.get(i1);
-		a.set(i1, a.get(i2));
-		a.set(i2, temp);
+	// TODO: Replace with Collections.swap? Test for perf.
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	static void swap(List a, int i, int j) {
+		a.set(i, a.set(j, a.get(i)));
 	}
 	
 	private static Bound createBound(int low, int high) {

@@ -1,14 +1,27 @@
 package org.mike.sort;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class SequentialSort {
 	
-	public static void insertionSort(List<Integer> a, int low, int high) {
+	public static <T> void insertionSort(List<T> a, int low, int high, Comparator<? super T> c) {
 		for (int i = low + 1; i < high + 1; i++) {
 			int j = i;
-			Integer temp = a.get(i);
-			while ((j > 0) && (a.get(j - 1) > temp)) {
+			T temp = a.get(i);
+			while ((j > 0) && (c.compare(a.get(j - 1), temp) > 0)) {
+				a.set(j, a.get(j - 1));
+				j--;
+			}
+			a.set(j, temp);
+		}
+	}
+
+	public static <T> void insertionSort(List<T> a, int low, int high) {
+		for (int i = low + 1; i < high + 1; i++) {
+			int j = i;
+			T temp = a.get(i);
+			while ((j > 0) && (((Comparable) a.get(j - 1)).compareTo(temp)) > 0) {
 				a.set(j, a.get(j - 1));
 				j--;
 			}
