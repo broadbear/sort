@@ -9,24 +9,27 @@ import java.util.concurrent.CyclicBarrier;
 
 public class PSRSSort {
 	private List<Integer> a;
+	private List<Integer> aFinal;
 	private List<Integer> samples;
 	private List<Integer> pivots;
 	CyclicBarrier barrier;
 	private int P;
 	private Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
-
+	
 	public PSRSSort(int p) {
 		this.P = p;
 		samples = new ArrayList<Integer>();
 		barrier = new CyclicBarrier(p);
 	}
 
-	public void parentSort(final List<Integer> a) {
+	public List<Integer> parentSort(final List<Integer> a) {
 		this.a = a;
 		
 		for (int p = 0; p < P; p++) {
 			childSort(p); // TODO: threads
 		}
+		
+		return aFinal;
 	}
 	
 	public void childSort(int p) {
@@ -45,9 +48,10 @@ public class PSRSSort {
 
 		// each proc iterates own list, merge (insert lowest value in central list, update bound)
 		List<Bound> localBoundList = procBoundMap.get(p);
+		List<Integer> mergedSubList = mergeSubLists(a, p);
 		
 		// iterate procs, concatenating each procs own central list into single central list
-		
+		aFinal.addAll(mergedSubList); // TODO: synchronize
 		
 	}
 	
@@ -97,7 +101,6 @@ public class PSRSSort {
 		Bound newBound = new Bound();
 		newBound.low = b.low;
 		for (int i = 0; i <= pivots.size() - 1; i++) {
-			
 			int j = newBound.low;
 			Integer currPivotValue = pivots.get(i);
 			while (a.get(j) <= currPivotValue && j <= b.high) {
@@ -108,9 +111,39 @@ public class PSRSSort {
 			boundList.add(newBound);
 			newBound = new Bound();
 			newBound.low = j + 1;
-			
 		}
-			
+
+		if (newBound.low < list.size() - 1) {
+			int i = newBound.low;
+			while (i < list.size()) {
+				i++;
+			}
+			newBound.high = i;
+			List<Bound> boundList = getBoundList(pivots.size());
+			boundList.add(newBound);
+		}
+	}
+	
+	public List<Integer> mergeSubLists(List<Integer> list, int p) {
+		List<Integer> subList = new ArrayList<Integer>();
+		List<Bound> boundList = getBoundList(p);
+		while(boundList.size() > 0) {
+			Integer lowestSoFar = Integer.MAX_VALUE;
+			Bound lowestBound = null;
+			for (Bound b: boundList) {
+				Integer currValue = a.get(b.low);
+				if (currValue < lowestSoFar) {
+					lowestBound = b;
+					lowestSoFar = a.get(b.low);
+				}
+			}
+			subList.add(a.get(lowestBound.low));
+			lowestBound.low++;
+			if (lowestBound.low > lowestBound.high) {
+				boundList.remove(lowestBound);
+			}
+		}
+		return subList;
 	}
 	
 	public List<Bound> getBoundList(int p) {
