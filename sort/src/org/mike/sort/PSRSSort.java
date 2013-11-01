@@ -1,7 +1,9 @@
 package org.mike.sort;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
@@ -11,6 +13,7 @@ public class PSRSSort {
 	private List<Integer> pivots;
 	CyclicBarrier barrier;
 	private int P;
+	private Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
 
 	public PSRSSort(int p) {
 		this.P = p;
@@ -18,15 +21,15 @@ public class PSRSSort {
 		barrier = new CyclicBarrier(p);
 	}
 
-	public void sort(final List<Integer> a) {
+	public void parentSort(final List<Integer> a) {
 		this.a = a;
 		
 		for (int p = 0; p < P; p++) {
-			doSort(p); // TODO: threads
+			childSort(p); // TODO: threads
 		}
 	}
 	
-	public void doSort(int p) {
+	public void childSort(int p) {
 		Bound b = getBounds(p);
 		SequentialSort.quicksort(a, b.low, b.high);
 		List<Integer> sample = getSample(b.low, b.high);
@@ -36,6 +39,15 @@ public class PSRSSort {
 			pivots = getPivots(samples);
 		}
 		barrierAwait();
+
+		// store bounds, map of proc specific lists
+		disectLocalList(a, b, p);
+
+		// each proc iterates own list, merge (insert lowest value in central list, update bound)
+		List<Bound> localBoundList = procBoundMap.get(p);
+		
+		// iterate procs, concatenating each procs own central list into single central list
+		
 		
 	}
 	
@@ -80,12 +92,33 @@ public class PSRSSort {
 			e.printStackTrace();
 		}
 	}
-		
-	public class Bound {
-		int low;
-		int high;
-		public String toString() {
-			return "["+low+","+high+"]";
+	
+	public void disectLocalList(List<Integer> list, Bound b, int p) {
+		Bound newBound = new Bound();
+		newBound.low = b.low;
+		for (int i = 0; i <= pivots.size() - 1; i++) {
+			
+			int j = newBound.low;
+			Integer currPivotValue = pivots.get(i);
+			while (a.get(j) <= currPivotValue && j <= b.high) {
+				j++;
+			}
+			newBound.high = j;
+			List<Bound> boundList = getBoundList(i);
+			boundList.add(newBound);
+			newBound = new Bound();
+			newBound.low = j + 1;
+			
 		}
+			
+	}
+	
+	public List<Bound> getBoundList(int p) {
+		List<Bound> boundList = procBoundMap.get(p);
+		if (boundList == null) {
+			boundList = new ArrayList<Bound>();
+			procBoundMap.put(p, boundList);
+		}
+		return boundList;
 	}
 }
