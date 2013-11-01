@@ -197,6 +197,7 @@ public final class ParallelQuicksort<T> {
 		}
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	static <T> int partition(List<T> a, int left, int right) {
 		int pivotIndex = left;
 		Comparable pivotValue = (Comparable) a.get(pivotIndex);
