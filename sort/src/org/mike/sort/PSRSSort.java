@@ -46,7 +46,10 @@ public final class PSRSSort {
 	void childSort(int p) {
 		Bound b = getBounds(p);
 		
+		// quicksort local list
 		SequentialSort.quicksort(a, b.low, b.high);
+
+		// sample local list
 		List<Integer> sample = getSample(b.low, b.high);
 		samples.addAll(sample);
 		
@@ -81,18 +84,27 @@ public final class PSRSSort {
 		List<Integer> sample = new ArrayList<Integer>();
 		int n = a.size();
 		for (int i = 0; i < P; i++) {
-			int index = ((i * n) / (P * P)) + 1 + low - 1;
+			int index = ((i * n) / (P * P)) + 1 + low;
 //			System.out.println("i ["+i+"] n ["+n+"] P ["+P+"] b.low ["+low+"] index ["+index+"]");
 			if (index > high) {
 				index = high;
 			}
-			sample.add(a.get(index));
+			sample.add(a.get(index - 1));
 		}
 		return sample;
 	}
 	
 	List<Integer> getPivots(List<Integer> list) {
-		return new ArrayList<Integer>(); // TODO
+		List<Integer> pivots = new ArrayList<Integer>();
+		for (int i = 1; i < P; i++) {
+			int index = ((i * P) + (int) Math.floor(P / 2));
+//			System.out.println("i ["+i+"] P ["+P+"] index ["+index+"]");
+			if (index > list.size() - 1) {
+				index = list.size() - 1;
+			}
+			pivots.add(list.get(index - 1));
+		}
+		return pivots;
 	}
 	
 	void barrierAwait() {
@@ -100,10 +112,8 @@ public final class PSRSSort {
 			barrier.await();
 			barrier.reset();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (BrokenBarrierException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -118,8 +128,7 @@ public final class PSRSSort {
 				j++;
 			}
 			newBound.high = j - 1;
-			List<Bound> boundList = getBoundList(i);
-			boundList.add(newBound);
+			addBound(i, newBound);
 			newBound = new Bound();
 			newBound.low = j;
 		}
@@ -130,8 +139,7 @@ public final class PSRSSort {
 				i++;
 			}
 			newBound.high = i;
-			List<Bound> boundList = getBoundList(pivots.size());
-			boundList.add(newBound);
+			addBound(pivots.size(), newBound);
 		}
 	}
 	
@@ -170,6 +178,11 @@ public final class PSRSSort {
 		return lowest;
 	}
 	
+	void addBound(int p, Bound b) {
+		List<Bound> boundList = getBoundList(p);
+		boundList.add(b);
+	}
+
 	List<Bound> getBoundList(int p) {
 		List<Bound> boundList = procBoundMap.get(p);
 		if (boundList == null) {

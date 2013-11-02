@@ -50,25 +50,24 @@ public class Driver {
 //		System.out.println("mean ["+mean+"]");
 		
 		List<Integer> list = createPSRSTestList();
-		System.out.println(list);
+		System.out.println("start: "+list);
 		PSRSSort sorter = new PSRSSort(3);
 		sorter.a = list;
-		System.out.println(list.size()+","+sorter.getBounds(0)+","+sorter.getBounds(1)+","+sorter.getBounds(2));
+		System.out.println(sorter.a.size()+","+sorter.getBounds(0)+","+sorter.getBounds(1)+","+sorter.getBounds(2));
 		for (int i = 0; i < 3; i++) {
-			sorter.a = createPSRSInterimTestList1();
 			Bound b = sorter.getBounds(i);
+			SequentialSort.quicksort(sorter.a, b.low, b.high);
 			List<Integer> sample = sorter.getSample(b.low, b.high);
 			System.out.println("p["+i+"], sample: "+sample);
 			sorter.samples.addAll(sample);
 		}
+		System.out.println("locally quicksorted: "+sorter.a);
 		
 		SequentialSort.quicksort(sorter.samples, 0, sorter.samples.size() - 1);
 		System.out.println("samples, post-sort: "+sorter.samples);
-		List<Integer> pivots = sorter.getPivots(sorter.samples);
-		
-		sorter.pivots = pivots;
-		sorter.pivots.add(33);
-		sorter.pivots.add(69);
+
+		sorter.pivots = sorter.getPivots(sorter.samples);
+		System.out.println("pivots: "+sorter.pivots);
 		
 		for (int i = 0; i < 3; i++) {
 			sorter.disectLocalList(sorter.a, sorter.getBounds(i));
