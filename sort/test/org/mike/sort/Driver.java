@@ -1,12 +1,10 @@
-package org.mike.drivers;
+package org.mike.sort;
 
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
-
-import org.mike.sort.ParallelQuicksort;
 
 
 /**
@@ -41,25 +39,44 @@ public class Driver {
 //		System.out.println("sort checks out");
 //		System.out.println("time ["+(endTime - startTime)+"]");
 		
-		int mean = test(3);
-		System.out.println("mean ["+mean+"]");
-		mean = test(2);
-		System.out.println("mean ["+mean+"]");
-		mean = test(3);
-		System.out.println("mean ["+mean+"]");
-		mean = test(4);
-		System.out.println("mean ["+mean+"]");
+//		int mean = test(2);
+//		System.out.println("mean ["+mean+"]");
+//		mean = test(2);
+//		System.out.println("mean ["+mean+"]");
+//		mean = test(3);
+//		System.out.println("mean ["+mean+"]");
+//		mean = test(4);
+//		System.out.println("mean ["+mean+"]");
 		
-//		PSRSSort psrsSort = new PSRSSort(3);
-//		List<Integer> list = createPSRSTestList();
-//		System.out.println(list);
-//		psrsSort.sort(list);
-//		System.out.println(list.size()+","+psrsSort.getBounds(0)+","+psrsSort.getBounds(1)+","+psrsSort.getBounds(2));
-//		for (int i = 0; i < 3; i++) {
-//			PSRSSort.Bound b = psrsSort.getBounds(i);
-//			List<Integer> sample = psrsSort.getSample(b.low, b.high);
-//			System.out.println(sample);
-//		}
+		List<Integer> list = createPSRSTestList();
+		System.out.println(list);
+		PSRSSort sorter = new PSRSSort(3);
+		sorter.a = list;
+		System.out.println(list.size()+","+sorter.getBounds(0)+","+sorter.getBounds(1)+","+sorter.getBounds(2));
+		for (int i = 0; i < 3; i++) {
+			sorter.a = createPSRSInterimTestList1();
+			Bound b = sorter.getBounds(i);
+			List<Integer> sample = sorter.getSample(b.low, b.high);
+			System.out.println("p["+i+"], sample: "+sample);
+			sorter.samples.addAll(sample);
+		}
+		
+		SequentialSort.quicksort(sorter.samples, 0, sorter.samples.size() - 1);
+		System.out.println("samples, post-sort: "+sorter.samples);
+		List<Integer> pivots = sorter.getPivots(sorter.samples);
+		
+		sorter.pivots = pivots;
+		sorter.pivots.add(33);
+		sorter.pivots.add(69);
+		
+		for (int i = 0; i < 3; i++) {
+			sorter.disectLocalList(sorter.a, sorter.getBounds(i));
+		}
+		System.out.println("procBoundMap: "+sorter.procBoundMap);
+		for (int i = 0; i < 3; i++) {
+			List<Integer> subList = sorter.mergeSubLists(sorter.a, i);
+			System.out.println("merged sublist: "+subList);
+		}
 	}
 	
 	
@@ -82,6 +99,15 @@ public class Driver {
 		return list;
 	}
 	
+	public static List<Integer> createPSRSInterimTestList1() {
+		List<Integer> list = new ArrayList<Integer>();
+		Integer[] a = {6, 14, 15, 39, 46, 48, 72, 91, 93, 12, 21, 36, 40, 54, 61, 69, 89, 97, 20, 27, 32, 33, 53, 58, 72, 84, 97};
+		for (Integer i: a) {
+			list.add(i);
+		}
+		return list;
+	}
+	
 	public static void verify(List<Integer> list) {
 		Integer prev = -1;
 		for (Integer i: list) {
@@ -96,7 +122,7 @@ public class Driver {
 		List<Integer> times = new ArrayList<Integer>();
 		
 		for(int i = 0; i < 100; i++) {
-			List<Integer> list = Driver.createList(4000000);
+			List<Integer> list = Driver.createList(10000000);
 			long startTime = System.currentTimeMillis();
 //			Collections.sort(list);
 			ParallelQuicksort.sort(p, 1000, list, new Comparator<Integer>() {
@@ -110,12 +136,12 @@ public class Driver {
 			System.out.println("iteration ["+i+"] time ["+time+"]");
 			times.add((int)(time));
 			verify(list);
-			System.out.println("sort checks out");
+//			System.out.println("sort checks out");
 		}
 		
-		List<Integer> sample = getSample(32, times);
-		int stdDev = calculateStdDev(sample);
-		int mean = calculateMean(sample);
+//		List<Integer> sample = getSample(32, times);
+		int stdDev = calculateStdDev(times);
+		int mean = calculateMean(times);
 		return mean;
 	}
 	

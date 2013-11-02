@@ -42,7 +42,7 @@ public class SequentialSort {
 		Integer pivotValue = a.get(pivotIndex);
 		swap(a, pivotIndex, right);
 		int storeIndex = left;
-		for (int i = left; i < right; i++) {
+		for (int i = left; i <= right - 1; i++) {
 			if (a.get(i) < pivotValue) {
 				swap(a, i, storeIndex);
 				storeIndex = storeIndex + 1;
@@ -55,6 +55,6 @@ public class SequentialSort {
 	public static void swap(List<Integer> a, int i1, int i2) {
 		Integer temp = a.get(i1);
 		a.set(i1, a.get(i2));
-		a.set(i1, temp);
+		a.set(i2, temp);
 	}
 }
