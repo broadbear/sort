@@ -1,6 +1,7 @@
 package org.mike.sort;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.concurrent.CyclicBarrier;
 
 public final class PSRSSort {
 	List<Integer> a;
-	List<Integer> aFinal;
+	Integer[] aFinal;
 	List<Integer> samples;
 	List<Integer> pivots;
 	CyclicBarrier barrier;
@@ -31,6 +32,7 @@ public final class PSRSSort {
 
 	List<Integer> parentSort(final List<Integer> a) {
 		this.a = a;
+		this.aFinal = new Integer[a.size()];
 		
 		for (int p = 0; p < P; p++) {
 			childSort(p); // TODO: threads
@@ -38,33 +40,29 @@ public final class PSRSSort {
 		
 		// join
 		
-		// iterate procs, concatenating each procs own central list into single central list
-		for (int i = 0; i < P; i++) {
-			List<Integer> procMergedList = procMergedListMap.get(i);
-			aFinal.addAll(procMergedList);
-		}
-
-		return aFinal;
+		return Arrays.asList(aFinal);
 	}
 	
 	void childSort(int p) {
 		Bound b = getBounds(p);
+		
 		SequentialSort.quicksort(a, b.low, b.high);
 		List<Integer> sample = getSample(b.low, b.high);
 		samples.addAll(sample);
+		
+		// sort the sample list and obtain the pivots
 		if (p == 0) {
 			SequentialSort.quicksort(samples, 0, samples.size() - 1);
 			pivots = getPivots(samples);
 		}
 		barrierAwait();
 		
-
 		// store bounds, map of proc specific lists
 		disectLocalList(a, b);
+		barrierAwait();
 
 		// each proc iterates own list, merge (insert lowest value in central list, update bound)
-		List<Integer> mergedSubList = mergeSubLists(a, p);
-		procMergedListMap.put(p, mergedSubList);		
+		mergeLocalLists(a, p);
 	}
 	
 	Bound getBounds(int p) {
@@ -100,6 +98,7 @@ public final class PSRSSort {
 	void barrierAwait() {
 		try {
 			barrier.await();
+			barrier.reset();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -115,7 +114,7 @@ public final class PSRSSort {
 		for (int i = 0; i <= pivots.size() - 1; i++) {
 			int j = newBound.low;
 			Integer currPivotValue = pivots.get(i);
-			while (a.get(j) <= currPivotValue && j <= b.high) { // TODO: advances one index too far
+			while (a.get(j) <= currPivotValue && j <= b.high) {
 				j++;
 			}
 			newBound.high = j - 1;
@@ -136,24 +135,39 @@ public final class PSRSSort {
 		}
 	}
 	
-	List<Integer> mergeSubLists(List<Integer> list, int p) {
-		List<Integer> subList = new ArrayList<Integer>();
+	void mergeLocalLists(List<Integer> list, int p) {
 		List<Bound> boundList = getBoundList(p);
+		int currIndex = findStartIndex(boundList); // TODO: this is wrong, lowest bound is not where it should start
 		while(boundList.size() > 0) {
-			Bound lowest = null;
-			for (Bound b: boundList) {
-				Integer currValue = a.get(b.low);
-				if (lowest == null || currValue < a.get(lowest.low)) {
-					lowest = b;
-				}
-			}
-			subList.add(a.get(lowest.low));
+			Bound lowest = findNextLowest(boundList);
+			aFinal[currIndex] = a.get(lowest.low);
 			lowest.low++;
+			currIndex++;
 			if (lowest.low > lowest.high) {
 				boundList.remove(lowest);
 			}
 		}
-		return subList;
+	}
+	
+	int findStartIndex(List<Bound> boundList) {
+		int startIndex = Integer.MAX_VALUE;
+		for (Bound b: boundList) {
+			if (startIndex > b.low) {
+				startIndex = b.low;
+			}
+		}
+		return startIndex;
+	}
+	
+	Bound findNextLowest(List<Bound> boundList) {
+		Bound lowest = null;
+		for (Bound b: boundList) {
+			Integer currValue = a.get(b.low);
+			if (lowest == null || currValue < a.get(lowest.low)) {
+				lowest = b;
+			}
+		}
+		return lowest;
 	}
 	
 	List<Bound> getBoundList(int p) {

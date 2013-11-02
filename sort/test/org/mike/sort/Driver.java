@@ -2,6 +2,7 @@ package org.mike.sort;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -73,10 +74,12 @@ public class Driver {
 			sorter.disectLocalList(sorter.a, sorter.getBounds(i));
 		}
 		System.out.println("procBoundMap: "+sorter.procBoundMap);
+		sorter.aFinal = new Integer[sorter.a.size()];
+		System.out.println("size: "+sorter.a.size());
 		for (int i = 0; i < 3; i++) {
-			List<Integer> subList = sorter.mergeSubLists(sorter.a, i);
-			System.out.println("merged sublist: "+subList);
+			sorter.mergeLocalLists(sorter.a, i);
 		}
+		System.out.println("final list: "+Arrays.asList(sorter.aFinal));
 	}
 	
 	
