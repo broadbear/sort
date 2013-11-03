@@ -15,6 +15,7 @@ public final class PSRSSort {
 	List<Integer> samples;
 	List<Integer> pivots;
 	CyclicBarrier barrier;
+	Integer[] localListSize;
 	int P;
 	Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
 	Map<Integer, List<Integer>> procMergedListMap = new HashMap<Integer, List<Integer>>();
@@ -28,6 +29,7 @@ public final class PSRSSort {
 		this.P = p;
 		samples = Collections.synchronizedList(new ArrayList<Integer>());
 		barrier = new CyclicBarrier(p);
+		localListSize = new Integer[p];
 	}
 
 	List<Integer> parentSort(final List<Integer> a) {
@@ -62,6 +64,11 @@ public final class PSRSSort {
 		
 		// store bounds, map of proc specific lists
 		disectLocalList(a, b);
+		if (p == 0) {
+			for (int i = 0; i < p; i++) {
+				localListSize[i] = findLocalListSize(i);
+			}
+		}
 		barrierAwait();
 
 		// each proc iterates own list, merge (insert lowest value in central list, update bound)
@@ -145,7 +152,7 @@ public final class PSRSSort {
 	
 	void mergeLocalLists(List<Integer> list, int p) {
 		List<Bound> boundList = getBoundList(p);
-		int currIndex = findStartIndex(boundList); // TODO: this is wrong, lowest bound is not where it should start
+		int currIndex = findStartIndex(p); // TODO: this is wrong, lowest bound is not where it should start
 		while(boundList.size() > 0) {
 			Bound lowest = findNextLowest(boundList);
 			aFinal[currIndex] = a.get(lowest.low);
@@ -157,14 +164,21 @@ public final class PSRSSort {
 		}
 	}
 	
-	int findStartIndex(List<Bound> boundList) {
-		int startIndex = Integer.MAX_VALUE;
-		for (Bound b: boundList) {
-			if (startIndex > b.low) {
-				startIndex = b.low;
-			}
+	int findStartIndex(int p) {
+		int startIndex = 0;
+		for (int i = 0; i < p; i++) {
+			startIndex += localListSize[i];
 		}
 		return startIndex;
+	}
+	
+	int findLocalListSize(int p) {
+		List<Bound> boundList = getBoundList(p);
+		int size = 0;
+		for (Bound b: boundList) {
+			size += (b.high - b.low) + 1; 
+		}
+		return size;
 	}
 	
 	Bound findNextLowest(List<Bound> boundList) {

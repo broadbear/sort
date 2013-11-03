@@ -72,6 +72,9 @@ public class Driver {
 		for (int i = 0; i < 3; i++) {
 			sorter.disectLocalList(sorter.a, sorter.getBounds(i));
 		}
+		for (int i = 0; i < 3; i++) {
+			sorter.localListSize[i] = sorter.findLocalListSize(i);
+		}
 		System.out.println("procBoundMap: "+sorter.procBoundMap);
 		sorter.aFinal = new Integer[sorter.a.size()];
 		System.out.println("size: "+sorter.a.size());
