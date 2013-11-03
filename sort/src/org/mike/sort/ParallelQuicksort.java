@@ -100,7 +100,6 @@ public final class ParallelQuicksort<T> {
 
 	void parentSort(final List<T> a) {
 		n = a.size();
-//		this.a = a;
 		initializeStack(n);
 		
 		stop = false;

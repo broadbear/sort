@@ -3,6 +3,7 @@ package org.mike.sort;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -28,6 +29,9 @@ import java.util.Random;
  */
 public class Driver {
 
+	public static int ITERATIONS = 10;
+	public static int ELEMENTS = 10000000;
+	
 	public static void main(String[] args) {
 //		System.out.println("parallel quicksort");
 //		List<Integer> list = Driver.createList(2000000);
@@ -48,7 +52,15 @@ public class Driver {
 //		System.out.println("mean ["+mean+"]");
 //		mean = test(4);
 //		System.out.println("mean ["+mean+"]");
-		
+
+		int javaSortMean = testJavaSort();
+		int parQSortMean = testParallelQuickSsort(4);
+		int psrsMean = testPSRS(4);
+		System.out.println(""+javaSortMean+", "+parQSortMean+", "+psrsMean);
+	}
+	
+	
+	public static void testPSRS() {
 		List<Integer> list = createPSRSTestList();
 		System.out.println("start: "+list);
 		PSRSSort sorter = new PSRSSort(3);
@@ -83,7 +95,6 @@ public class Driver {
 		}
 		System.out.println("final list: "+Arrays.asList(sorter.aFinal));
 	}
-	
 	
 	public static List<Integer> createList(int n) {
 		List<Integer> l = new ArrayList<Integer>();
@@ -123,11 +134,33 @@ public class Driver {
 		}
 	}
 	
-	public static int test(int p) {
+	public static int testPSRS(int p) {
 		List<Integer> times = new ArrayList<Integer>();
 		
-		for(int i = 0; i < 100; i++) {
-			List<Integer> list = Driver.createList(10000000);
+		for(int i = 0; i < ITERATIONS; i++) {
+			List<Integer> unsorted = Driver.createList(ELEMENTS);
+			long startTime = System.currentTimeMillis();
+//			Collections.sort(unsorted);
+			List<Integer> sorted = PSRSSort.sort(unsorted, p);
+			long endTime = System.currentTimeMillis();
+			long time = endTime - startTime;
+			System.out.println("iteration ["+i+"] time ["+time+"]");
+			times.add((int)(time));
+			verify(sorted);
+//			System.out.println("sort checks out");
+		}
+		
+//		List<Integer> sample = getSample(32, times);
+		int stdDev = calculateStdDev(times);
+		int mean = calculateMean(times);
+		return mean;
+	}
+	
+	public static int testParallelQuickSsort(int p) {
+		List<Integer> times = new ArrayList<Integer>();
+		
+		for(int i = 0; i < ITERATIONS; i++) {
+			List<Integer> list = Driver.createList(ELEMENTS);
 			long startTime = System.currentTimeMillis();
 //			Collections.sort(list);
 			ParallelQuicksort.sort(p, 1000, list, new Comparator<Integer>() {
@@ -149,7 +182,28 @@ public class Driver {
 		int mean = calculateMean(times);
 		return mean;
 	}
-	
+
+	public static int testJavaSort() {
+		List<Integer> times = new ArrayList<Integer>();
+		
+		for(int i = 0; i < ITERATIONS; i++) {
+			List<Integer> list = Driver.createList(ELEMENTS);
+			long startTime = System.currentTimeMillis();
+			Collections.sort(list);
+			long endTime = System.currentTimeMillis();
+			long time = endTime - startTime;
+			System.out.println("iteration ["+i+"] time ["+time+"]");
+			times.add((int)(time));
+			verify(list);
+//			System.out.println("sort checks out");
+		}
+		
+//		List<Integer> sample = getSample(32, times);
+		int stdDev = calculateStdDev(times);
+		int mean = calculateMean(times);
+		return mean;
+	}
+
 	public static List<Integer> getSample(int size, List<Integer> set) {
 		List<Integer> sample = new ArrayList<Integer>();
 		Random r = new Random();

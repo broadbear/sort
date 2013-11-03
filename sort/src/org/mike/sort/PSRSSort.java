@@ -14,11 +14,21 @@ public final class PSRSSort {
 	Integer[] aFinal;
 	List<Integer> samples;
 	List<Integer> pivots;
-	CyclicBarrier barrier;
+	CyclicBarrier barrier1;
+	CyclicBarrier barrier2;
+	CyclicBarrier barrier3;
+	CyclicBarrier barrier4;
 	Integer[] localListSize;
 	int P;
 	Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
-	Map<Integer, List<Integer>> procMergedListMap = new HashMap<Integer, List<Integer>>();
+	boolean debug = false;
+
+	public static List<Integer> sort(List<Integer> a, int P, boolean debug) {
+		PSRSSort psrsSort = new PSRSSort(P);
+		psrsSort.debug = debug;
+		List<Integer> sortedA = psrsSort.parentSort(a);
+		return sortedA;
+	}
 	
 	public static List<Integer> sort(List<Integer> a, int P) {
 		List<Integer> sortedA = new PSRSSort(P).parentSort(a);
@@ -28,7 +38,10 @@ public final class PSRSSort {
 	PSRSSort(int p) {
 		this.P = p;
 		samples = Collections.synchronizedList(new ArrayList<Integer>());
-		barrier = new CyclicBarrier(p);
+		barrier1 = new CyclicBarrier(p);
+		barrier2 = new CyclicBarrier(p);
+		barrier3 = new CyclicBarrier(p);
+		barrier4 = new CyclicBarrier(p);
 		localListSize = new Integer[p];
 	}
 
@@ -36,40 +49,62 @@ public final class PSRSSort {
 		this.a = a;
 		this.aFinal = new Integer[a.size()];
 		
+		List<Thread> threads = new ArrayList<Thread>();
 		for (int p = 0; p < P; p++) {
-			childSort(p); // TODO: threads
+			final int pTemp = p;
+			Thread t = new Thread(new Runnable() {
+				public void run() {
+					childSort(pTemp);
+				}
+			});
+			t.start();
+			threads.add(t);
 		}
-		
-		// join
+		for (Thread t: threads) {
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 		
 		return Arrays.asList(aFinal);
 	}
 	
 	void childSort(int p) {
-		Bound b = getBounds(p);
+		Bound localBound = getBounds(p);
 		
 		// quicksort local list
-		SequentialSort.quicksort(a, b.low, b.high);
+		SequentialSort.quicksort(a, localBound.low, localBound.high);
+//		if (p == 0) System.out.println("local sorted: "+a);
 
 		// sample local list
-		List<Integer> sample = getSample(b.low, b.high);
+		List<Integer> sample = getSample(localBound.low, localBound.high);
 		samples.addAll(sample);
+		barrierAwait(barrier1);
+		if (debug && p == 0) System.out.println("samples: "+samples);
 		
 		// sort the sample list and obtain the pivots
 		if (p == 0) {
 			SequentialSort.quicksort(samples, 0, samples.size() - 1);
 			pivots = getPivots(samples);
 		}
-		barrierAwait();
+		barrierAwait(barrier2);
+		if (debug && p == 0) System.out.println("sorted samples: "+samples);
+		if (debug && p == 0) System.out.println("pivots: "+pivots);
 		
 		// store bounds, map of proc specific lists
-		disectLocalList(a, b);
+		disectLocalList(a, localBound);
+		barrierAwait(barrier3);
+		if (debug && p == 0) System.out.println("procBoundMap: "+procBoundMap);
+
 		if (p == 0) {
-			for (int i = 0; i < p; i++) {
+			for (int i = 0; i < P; i++) {
 				localListSize[i] = findLocalListSize(i);
+				if (debug) System.out.println("p["+i+"] size["+localListSize[i]+"]");
 			}
 		}
-		barrierAwait();
+		barrierAwait(barrier4);
 
 		// each proc iterates own list, merge (insert lowest value in central list, update bound)
 		mergeLocalLists(a, p);
@@ -114,10 +149,9 @@ public final class PSRSSort {
 		return pivots;
 	}
 	
-	void barrierAwait() {
+	void barrierAwait(CyclicBarrier barrier) {
 		try {
 			barrier.await();
-			barrier.reset();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (BrokenBarrierException e) {
@@ -135,7 +169,7 @@ public final class PSRSSort {
 				j++;
 			}
 			newBound.high = j - 1;
-			addBound(i, newBound);
+			addBound(i, newBound); // TODO: synchronize!
 			newBound = new Bound();
 			newBound.low = j;
 		}
@@ -192,7 +226,7 @@ public final class PSRSSort {
 		return lowest;
 	}
 	
-	void addBound(int p, Bound b) {
+	synchronized void addBound(int p, Bound b) {
 		List<Bound> boundList = getBoundList(p);
 		boundList.add(b);
 	}
