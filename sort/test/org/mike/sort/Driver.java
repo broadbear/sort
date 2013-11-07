@@ -30,7 +30,7 @@ import java.util.Random;
 public class Driver {
 
 	public static int ITERATIONS = 10;
-	public static int ELEMENTS = 10000000;
+	public static int ELEMENTS = 8000000;
 	
 	public static void main(String[] args) {
 //		System.out.println("parallel quicksort");
@@ -54,9 +54,9 @@ public class Driver {
 //		System.out.println("mean ["+mean+"]");
 
 		int javaSortMean = testJavaSort();
-		int parQSortMean = testParallelQuickSsort(4);
-		int psrsMean = testPSRS(4);
-		System.out.println(""+javaSortMean+", "+parQSortMean+", "+psrsMean);
+//		int parQSortMean = testParallelQuickSsort(4);
+//		int psrsMean = testPSRS(4);
+		System.out.println(javaSortMean);
 	}
 	
 	

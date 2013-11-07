@@ -113,7 +113,8 @@ public final class PSRSSort {
 	Bound getBounds(int p) {
 		Bound b = new Bound();
 		int n = a.size();
-		int elemsPerProc = (int) Math.ceil(n / P);
+		int elemsPerProc = (int) Math.ceil((float)n / (float)P);
+		if (debug) System.out.println("p["+p+"] n["+n+"] elemsPerProc["+elemsPerProc+"]");
 		b.low = p * elemsPerProc;
 		b.high = b.low - 1 + elemsPerProc;
 		if (b.high > a.size() - 1) {
@@ -127,7 +128,7 @@ public final class PSRSSort {
 		int n = a.size();
 		for (int i = 0; i < P; i++) {
 			int index = ((i * n) / (P * P)) + 1 + low;
-//			System.out.println("i ["+i+"] n ["+n+"] P ["+P+"] b.low ["+low+"] index ["+index+"]");
+			if (debug) System.out.println("i ["+i+"] n ["+n+"] P ["+P+"] b.low ["+low+"] index ["+index+"]");
 			if (index > high) {
 				index = high;
 			}
@@ -140,7 +141,7 @@ public final class PSRSSort {
 		List<Integer> pivots = new ArrayList<Integer>();
 		for (int i = 1; i < P; i++) {
 			int index = ((i * P) + (int) Math.floor(P / 2));
-//			System.out.println("i ["+i+"] P ["+P+"] index ["+index+"]");
+			if (debug) System.out.println("i ["+i+"] P ["+P+"] index ["+index+"]");
 			if (index > list.size() - 1) {
 				index = list.size() - 1;
 			}
@@ -169,7 +170,7 @@ public final class PSRSSort {
 				j++;
 			}
 			newBound.high = j - 1;
-			addBound(i, newBound); // TODO: synchronize!
+			addBound(i, newBound);
 			newBound = new Bound();
 			newBound.low = j;
 		}
@@ -186,7 +187,7 @@ public final class PSRSSort {
 	
 	void mergeLocalLists(List<Integer> list, int p) {
 		List<Bound> boundList = getBoundList(p);
-		int currIndex = findStartIndex(p); // TODO: this is wrong, lowest bound is not where it should start
+		int currIndex = findStartIndex(p);
 		while(boundList.size() > 0) {
 			Bound lowest = findNextLowest(boundList);
 			aFinal[currIndex] = a.get(lowest.low);
