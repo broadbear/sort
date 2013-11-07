@@ -75,6 +75,7 @@ public final class PSRSSort {
 		Bound localBound = getBounds(p);
 		
 		// quicksort local list
+		if (debug) System.out.println("p["+p+"] quicksort low["+localBound.low+"] high["+localBound.high+"]");
 		SequentialSort.quicksort(a, localBound.low, localBound.high);
 //		if (p == 0) System.out.println("local sorted: "+a);
 
@@ -114,7 +115,7 @@ public final class PSRSSort {
 		Bound b = new Bound();
 		int n = a.size();
 		int elemsPerProc = (int) Math.ceil((float)n / (float)P);
-		if (debug) System.out.println("p["+p+"] n["+n+"] elemsPerProc["+elemsPerProc+"]");
+		if (debug) System.out.println("p["+p+"] bounds n["+n+"] elemsPerProc["+elemsPerProc+"]");
 		b.low = p * elemsPerProc;
 		b.high = b.low - 1 + elemsPerProc;
 		if (b.high > a.size() - 1) {
