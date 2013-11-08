@@ -1,7 +1,6 @@
-sort
-====
+# sort
 
-Parallel sorting playground.
+## Parallel sorting playground.
 
 
 The goal is to create sort algorithms that are faster than the standard Java 
@@ -11,9 +10,9 @@ algorithms as well as adding new ones over the next several months. I may also
 venture into other, non-sort parallel algorithms such as graph searching, etc...
 Let's see what comes of it!
 
-Parallel Quicksort
+### Parallel Quicksort
 
-Overview:
+#### Overview:
 
 This is an (mostly) in-place sort that promises linear speedup (2 cores, 2x as fast, etc...) 
 up to a small number of cores. I have verfied the algorithm's performance suprasses
@@ -22,9 +21,11 @@ objects that implement the Comparable interface, as well as being able to take a
 instance. I'm currently working on a better pivot selection method. Normal quicksort 
 pitfalls apply to this algorithm.
 
-Usage:
+#### Usage:
 
+```
 ParallelQuicksort.sort(int P, int minParition, List<T> list);
+```
 
 P = number of child threads to instantiate.
 minPartition = smallest range of elements to quicksort. It is more efficient to sort smaller 
@@ -33,9 +34,9 @@ an insertion sort.
 list = the list to be sorted in-place.
 
 
-PSRS
+### PSRS
 
-Overview:
+#### Overview:
 
 This is a NON-in-place sort, but it supposedly provides linear speedup up to large
 numbers of cores. Given that even desktops are venturing into the 8-core realm, everyday 
@@ -43,9 +44,11 @@ performance improvement can be substantial. I have verfied the algorithm's
 performance suprasses Java Collections sort when used with up to 4 cores. The API has
 not yet been generalized for Comparable/Comparator.
 
-Usage:
+#### Usage:
 
+```
 List<Integer> sorted = PSRSSort.sort(int P, List<Integer> unsorted);
+```
 
 P = number of child threads to instantiate.
 unserted = the list to be sorted.
