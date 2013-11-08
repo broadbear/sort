@@ -141,7 +141,7 @@ public class Driver {
 			List<Integer> unsorted = Driver.createList(ELEMENTS);
 			long startTime = System.currentTimeMillis();
 //			Collections.sort(unsorted);
-			List<Integer> sorted = PSRSSort.sort(unsorted, p);
+			List<Integer> sorted = PSRSSort.sort(p, unsorted);
 			long endTime = System.currentTimeMillis();
 			long time = endTime - startTime;
 			System.out.println("iteration ["+i+"] time ["+time+"]");

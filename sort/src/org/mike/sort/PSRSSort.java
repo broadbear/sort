@@ -23,14 +23,14 @@ public final class PSRSSort {
 	Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
 	boolean debug = false;
 
-	public static List<Integer> sort(List<Integer> a, int P, boolean debug) {
+	public static List<Integer> sort(int P, List<Integer> a, boolean debug) {
 		PSRSSort psrsSort = new PSRSSort(P);
 		psrsSort.debug = debug;
 		List<Integer> sortedA = psrsSort.parentSort(a);
 		return sortedA;
 	}
 	
-	public static List<Integer> sort(List<Integer> a, int P) {
+	public static List<Integer> sort(int P, List<Integer> a) {
 		List<Integer> sortedA = new PSRSSort(P).parentSort(a);
 		return sortedA;
 	}
