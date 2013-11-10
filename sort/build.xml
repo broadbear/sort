@@ -5,6 +5,7 @@
 	<!-- TODO: gen javadoc -->
 	
 	<property name="src" location="src"/>
+	<property name="doc" location="doc"/>
 	<property name="build" location="build"/>
 	<property name="dist" location="dist"/>
 	<property name="reports.tests" location="test"/>
@@ -27,6 +28,7 @@
 	<target name="clean">
 		<delete dir="${build}"/>
 		<delete dir="${dist}"/>
+		<delete dir="${doc}"/>
 	</target>
 
 	<target name="test">
@@ -38,5 +40,9 @@
 				</fileset>
 			</batchtest>
 		</junit>
+	</target>
+	
+	<target name="doc" depends="init">
+		<javadoc sourcepath="${src}" destdir="${doc}"/>
 	</target>
 </project>
