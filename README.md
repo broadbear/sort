@@ -1,9 +1,11 @@
 # sort
 
+First jar available; sort/dist/lib/psort-0.0.1.jar.
+
 ## Parallel sorting playground.
 
 
-The goal is to create sort algorithms that are faster than the standard Java 
+The goal of this project is to create sort algorithms that are faster than the standard Java 
 Collections sort method when on a system with multiple cores, and to make them 
 as easy to use as the Collections sort method. I will be optimizing the existing
 algorithms as well as adding new ones over the next several months. I may also
