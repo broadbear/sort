@@ -3,17 +3,18 @@ package org.mike.sort;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
-public final class PSRSSort {
-	List<Integer> a;
-	Integer[] aFinal;
-	List<Integer> samples;
-	List<Integer> pivots;
+public final class PSRSSort<T> {
+	List<T> a;
+	Object[] aFinal;
+	List<T> samples;
+	List<T> pivots;
 	CyclicBarrier barrier1;
 	CyclicBarrier barrier2;
 	CyclicBarrier barrier3;
@@ -22,22 +23,29 @@ public final class PSRSSort {
 	int P;
 	Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
 	boolean debug = false;
+	Comparator<? super T> c;
 
-	public static List<Integer> sort(int P, List<Integer> a, boolean debug) {
-		PSRSSort psrsSort = new PSRSSort(P);
+	public static <T extends Comparable<? super T>> List<T> sort(int P, List<T> a, boolean debug) {
+		PSRSSort<T> psrsSort = new PSRSSort<T>(P);
 		psrsSort.debug = debug;
-		List<Integer> sortedA = psrsSort.parentSort(a);
+		List<T> sortedA = psrsSort.parentSort(a);
 		return sortedA;
 	}
 	
-	public static List<Integer> sort(int P, List<Integer> a) {
-		List<Integer> sortedA = new PSRSSort(P).parentSort(a);
+	public static <T extends Comparable<? super T>> List<T> sort(int P, List<T> a) {
+		return sort(P, a, null);
+	}
+	
+	public static <T> List<T> sort(int P, List<T> a, Comparator<? super T> c) {
+		PSRSSort<T> psrsSort = new PSRSSort<T>(P);
+		psrsSort.c = c;
+		List<T> sortedA = psrsSort.parentSort(a);
 		return sortedA;
 	}
 	
 	PSRSSort(int p) {
 		this.P = p;
-		samples = Collections.synchronizedList(new ArrayList<Integer>());
+		samples = Collections.synchronizedList(new ArrayList<T>());
 		barrier1 = new CyclicBarrier(p);
 		barrier2 = new CyclicBarrier(p);
 		barrier3 = new CyclicBarrier(p);
@@ -45,7 +53,7 @@ public final class PSRSSort {
 		localListSize = new Integer[p];
 	}
 
-	List<Integer> parentSort(final List<Integer> a) {
+	List<T> parentSort(final List<T> a) {
 		this.a = a;
 		this.aFinal = new Integer[a.size()];
 		
@@ -68,7 +76,8 @@ public final class PSRSSort {
 			}
 		}
 		
-		return Arrays.asList(aFinal);
+		List<Object> returnList = Arrays.asList(aFinal);
+		return (List<T>) returnList;
 	}
 	
 	void childSort(int p) {
@@ -76,18 +85,18 @@ public final class PSRSSort {
 		
 		// quicksort local list
 		if (debug) System.out.println("p["+p+"] quicksort low["+localBound.low+"] high["+localBound.high+"]");
-		SequentialSort.quicksort(a, localBound.low, localBound.high);
+		SequentialSort.quicksort(a, localBound.low, localBound.high, c);
 //		if (p == 0) System.out.println("local sorted: "+a);
 
 		// sample local list
-		List<Integer> sample = getSample(localBound.low, localBound.high);
+		List<T> sample = getSample(localBound.low, localBound.high);
 		samples.addAll(sample);
 		barrierAwait(barrier1);
 		if (debug && p == 0) System.out.println("samples: "+samples);
 		
 		// sort the sample list and obtain the pivots
 		if (p == 0) {
-			SequentialSort.quicksort(samples, 0, samples.size() - 1);
+			SequentialSort.quicksort(samples, 0, samples.size() - 1, c);
 			pivots = getPivots(samples);
 		}
 		barrierAwait(barrier2);
@@ -124,8 +133,8 @@ public final class PSRSSort {
 		return b;
 	}
 	
-	List<Integer> getSample(int low, int high) {
-		List<Integer> sample = new ArrayList<Integer>();
+	List<T> getSample(int low, int high) {
+		List<T> sample = new ArrayList<T>();
 		int n = a.size();
 		for (int i = 0; i < P; i++) {
 			int index = ((i * n) / (P * P)) + 1 + low;
@@ -138,8 +147,8 @@ public final class PSRSSort {
 		return sample;
 	}
 	
-	List<Integer> getPivots(List<Integer> list) {
-		List<Integer> pivots = new ArrayList<Integer>();
+	List<T> getPivots(List<T> list) {
+		List<T> pivots = new ArrayList<T>();
 		for (int i = 1; i < P; i++) {
 			int index = ((i * P) + (int) Math.floor(P / 2));
 			if (debug) System.out.println("i ["+i+"] P ["+P+"] index ["+index+"]");
@@ -161,15 +170,26 @@ public final class PSRSSort {
 		}
 	}
 	
-	void disectLocalList(List<Integer> list, Bound b) {
+	void disectLocalList(List<T> list, Bound b) {
 		Bound newBound = new Bound();
 		newBound.low = b.low;
 		for (int i = 0; i <= pivots.size() - 1; i++) {
 			int j = newBound.low;
-			Integer currPivotValue = pivots.get(i);
-			while (a.get(j) <= currPivotValue && j <= b.high) {
-				j++;
+			
+			// TODO: Some generics trickery, best we can do? Better than before?
+			if (c == null) {
+				Comparable currPivotValue = (Comparable) pivots.get(i);
+				while (((Comparable) a.get(j)).compareTo(currPivotValue) <= 0 && j <= b.high) {
+					j++;
+				}
 			}
+			else {
+				T currPivotValue = pivots.get(i);
+				while(c.compare(a.get(j), currPivotValue) <= 0 && j <= b.high) {
+					j++;
+				}
+			}
+			
 			newBound.high = j - 1;
 			addBound(i, newBound);
 			newBound = new Bound();
@@ -186,7 +206,7 @@ public final class PSRSSort {
 		}
 	}
 	
-	void mergeLocalLists(List<Integer> list, int p) {
+	void mergeLocalLists(List<T> list, int p) {
 		List<Bound> boundList = getBoundList(p);
 		int currIndex = findStartIndex(p);
 		while(boundList.size() > 0) {
@@ -220,10 +240,22 @@ public final class PSRSSort {
 	Bound findNextLowest(List<Bound> boundList) {
 		Bound lowest = null;
 		for (Bound b: boundList) {
-			Integer currValue = a.get(b.low);
-			if (lowest == null || currValue < a.get(lowest.low)) {
-				lowest = b;
+			
+			// TODO: more generics trickery
+			if (c == null) {
+				Comparable currValue = (Comparable) a.get(b.low);
+				if (lowest == null || currValue.compareTo((Comparable) a.get(lowest.low)) < 0) {
+					lowest = b;
+				}
 			}
+			else {
+				T currValue = a.get(b.low);
+				if (lowest == null || c.compare(currValue, a.get(lowest.low)) < 0) {
+					lowest = b;
+				}
+			}
+			
+			
 		}
 		return lowest;
 	}
