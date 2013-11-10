@@ -43,8 +43,8 @@ list = the list to be sorted in-place.
 This is a NON-in-place sort, but it supposedly provides linear speedup up to large
 numbers of cores. Given that even desktops are venturing into the 8-core realm, everyday 
 performance improvement can be substantial. I have verfied the algorithm's 
-performance suprasses Java Collections sort when used with up to 4 cores. The API has
-not yet been generalized for Comparable/Comparator.
+performance suprasses Java Collections sort when used with up to 4 cores. This API, too,
+is generalized for Comparable/Comparator.
 
 #### Usage:
 
