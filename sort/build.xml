@@ -2,8 +2,8 @@
 <project name="psort" default="dist" basedir=".">
 
 	<!-- TODO: run junit test cases -->
-	<!-- TODO: gen javadoc -->
-	
+
+	<property name="version" value="0.0.1"/>
 	<property name="src" location="src"/>
 	<property name="doc" location="doc"/>
 	<property name="build" location="build"/>
@@ -22,7 +22,7 @@
 	
 	<target name="dist" depends="compile">
 		<mkdir dir="${dist}/lib"/>
-		<jar jarfile="${dist}/lib/psort-${DSTAMP}.jar" basedir="${build}"/>
+		<jar jarfile="${dist}/lib/psort-${version}.jar" basedir="${build}"/>
 	</target>
 
 	<target name="clean">
