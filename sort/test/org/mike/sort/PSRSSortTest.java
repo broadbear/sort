@@ -1,8 +1,6 @@
 package org.mike.sort;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import junit.framework.Assert;
 
@@ -49,16 +47,16 @@ public class PSRSSortTest {
 	}
 
 	public void testSort(int P, int n) {
-		List<Integer> unsorted = createList(n);
-		PSRSSort sorter = new PSRSSort(P);
+		List<Integer> unsorted = Harness.createList(n);
+		PSRSSort<Integer> sorter = new PSRSSort<Integer>(P);
 		sorter.debug = true;
 		List<Integer> sorted = sorter.parentSort(unsorted);
-		verify(sorted);
+		Harness.verify(sorted);
 		System.out.println("P["+P+"] sort ok");
 	}
 	
 	public void testBound(int P, int n, int... bounds) {
-		PSRSSort sorter = createPsrsSort(P, n);
+		PSRSSort<Integer> sorter = createPsrsSort(P, n);
 		for (int p = 0; p < P; p++){
 			Bound b = sorter.getBounds(p);
 			int low = bounds[(p*2)];
@@ -74,30 +72,10 @@ public class PSRSSortTest {
 		Assert.assertEquals(high, b.high);
 	}
 	
-	public PSRSSort createPsrsSort(int p, int n) {
-		PSRSSort psrsSort = new PSRSSort(p);
-		psrsSort.a = createList(n);
+	public PSRSSort<Integer> createPsrsSort(int p, int n) {
+		PSRSSort<Integer> psrsSort = new PSRSSort<Integer>(p);
+		psrsSort.a = Harness.createList(n);
 		psrsSort.debug = true;
 		return psrsSort;
-	}
-	
-	public static List<Integer> createList(int n) {
-		List<Integer> l = new ArrayList<Integer>();
-		Random r = new Random();
-		r.setSeed(123);
-		for (int i = 0; i < n; i++) {
-			l.add(r.nextInt(10000));
-		}
-		return l;
-	}
-	
-	public static void verify(List<Integer> list) {
-		Integer prev = -1;
-		for (Integer i: list) {
-			if (i < prev) {
-				Assert.fail("bad sort! prev["+prev+"] curr["+i+"]");
-			}
-			prev = i;
-		}
 	}
 }

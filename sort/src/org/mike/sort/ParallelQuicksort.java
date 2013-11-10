@@ -133,12 +133,7 @@ public final class ParallelQuicksort<T> {
 			bounds = stackDelete();
 			while (bounds.low < bounds.high) {
 				if (bounds.high - bounds.low < minPartition) {
-					if (c == null) {
-						SequentialSort.insertionSort(a, bounds.low, bounds.high);
-					}
-					else {
-						SequentialSort.insertionSort(a, bounds.low, bounds.high, c);
-					}
+					SequentialSort.insertionSort(a, bounds.low, bounds.high, c);
 					break;
 				}
 				else {
