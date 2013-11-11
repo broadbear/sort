@@ -33,7 +33,7 @@ public class PSRSSortTest {
 	
 	@Test
 	public void testSort() {
-		int n = 1000;
+		int n = 5000000;
 		testSort(1, n);
 		testSort(2, n);
 		testSort(3, n);
