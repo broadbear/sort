@@ -1,6 +1,6 @@
 # sort
 
-First jar available; sort/dist/lib/psort-0.0.1.jar.
+Latest jar; sort/dist/lib/psort-0.0.2.jar.
 
 ## Parallel sorting playground.
 
@@ -11,6 +11,36 @@ as easy to use as the Collections sort method. I will be optimizing the existing
 algorithms as well as adding new ones over the next several months. I may also
 venture into other, non-sort parallel algorithms such as graph searching, etc...
 Let's see what comes of it!
+
+
+### The Fastest I've Got
+
+#### Overview:
+
+If you are looking for something to drop into your application that may 
+provide a performance boost, the fastest algorithm in the package is wrapped in 
+the PCollections class with an API similar to the Collections class. Calling this 
+sort method will attempt to determine the number of available processors, and 
+sort the given list using the PSRS algorithm described below. Note: this algorithm 
+is not 'in-place' (nor is Java's Collections merge sort). If you are seeking more 
+control over the number of child processes, or memory usage, you can use various 
+other algorithms through their explicitly defined classes.
+
+#### Usage:
+
+```
+List<T> sorted = PCollections.sort(List<T> unsorted);
+```
+
+#### Performance demonstration:
+
+Some sample data points: compares sorting 5 million randomly generated Integer 
+instances via Collections.sort() vs PCollections.sort() on a quad core system 
+(probably dual core reported as four with hyper-threading).
+
++ collections: mean[ 4648 ms ]
++ pcollections: mean[ 1409 ms ]
+
 
 ### Parallel Quicksort
 
@@ -29,11 +59,11 @@ pitfalls apply to this algorithm.
 ParallelQuicksort.sort(int P, int minParition, List<T> list);
 ```
 
-P = number of child threads to instantiate.
-minPartition = smallest range of elements to quicksort. It is more efficient to sort smaller 
++ P = number of child threads to instantiate.
++ minPartition = smallest range of elements to quicksort. It is more efficient to sort smaller 
 lists with a non-quicksort algorithm. Sub-lists smaller than this number will be sorted with
 an insertion sort.
-list = the list to be sorted in-place.
++ list = the list to be sorted in-place.
 
 
 ### PSRS
@@ -52,6 +82,6 @@ is generalized for Comparable/Comparator.
 List<Integer> sorted = PSRSSort.sort(int P, List<Integer> unsorted);
 ```
 
-P = number of child threads to instantiate.
-unserted = the list to be sorted.
-Returns sorted = the sorted list.
++ P = number of child threads to instantiate.
++ unsorted = the list to be sorted.
++ Returns sorted = the sorted list.
