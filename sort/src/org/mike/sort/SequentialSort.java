@@ -5,6 +5,8 @@ import java.util.List;
 
 public class SequentialSort {
 	
+	public static final int MIN_PARITIION = 100;
+	
 	public static <T extends Comparable<? super T>> void insertionSort(List<T> a, int low, int high) {
 		insertionSort(a, low, high, null);
 	}
@@ -38,10 +40,15 @@ public class SequentialSort {
 	
 	public static <T> void quicksort(List<T> a, int left, int right, Comparator<? super T> c) {
 		if (left < right) {
-			int pivotIndex = left;
-			int newPivotIndex = partition(a, left, right, pivotIndex, c);
-			quicksort(a, left, newPivotIndex - 1, c);
-			quicksort(a, newPivotIndex + 1, right, c);
+			if (right - left < MIN_PARITIION) {
+				insertionSort(a, left, right, c);
+			}
+			else {
+				int pivotIndex = left;
+				int newPivotIndex = partition(a, left, right, pivotIndex, c);
+				quicksort(a, left, newPivotIndex - 1, c);
+				quicksort(a, newPivotIndex + 1, right, c);
+			}
 		}
 	}
 	

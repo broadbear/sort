@@ -8,7 +8,7 @@ public class TestScript {
 
 	public static void main(String[] args) {
 		int n = 5000000;
-		int iterations = 20;
+		int iterations = 5;
 		SortStrategy<Integer> psrs = new SortStrategy<Integer>() {
 			public List<Integer> sort(List<Integer> unsorted) {
 				List<Integer> sorted = PCollections.sort(unsorted);
@@ -23,8 +23,16 @@ public class TestScript {
 			}
 		};
 
-		testSorts("collections", n, std, iterations);
+		SortStrategy<Integer> pqsort = new SortStrategy<Integer>() {
+			public List<Integer> sort(List<Integer> unsorted) {
+				ParallelQuicksort.sort(4, 1000, unsorted);
+				return unsorted;
+			}
+		};
+
+		testSorts("pquicksort", n, pqsort, iterations);		
 		testSorts("pcollections", n, psrs, iterations);
+		testSorts("collections", n, std, iterations);
 	}
 
 	static <T> long testSorts(String id, int n, SortStrategy<Integer> s, int iterations) {

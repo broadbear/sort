@@ -137,12 +137,8 @@ public final class ParallelQuicksort<T> {
 					break;
 				}
 				else {
-					if (c == null) {
-						median = partition(a, bounds.low, bounds.high);
-					}
-					else {
-						median = partition(a, bounds.low, bounds.high, c);
-					}
+					int pivotIndex = bounds.low;
+					median = SequentialSort.partition(a, bounds.low, bounds.high, pivotIndex, c);
 					stackInsert(median + 1, bounds.high);
 //					System.out.println("t["+Thread.currentThread().getName()+"] bounds "+bounds+" median ["+median+"]");
 					if (median <= bounds.low) {
@@ -189,43 +185,6 @@ public final class ParallelQuicksort<T> {
 			Bound b = createBound(0, 0);
 			return b;
 		}
-	}
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	static <T> int partition(List<T> a, int left, int right) {
-		int pivotIndex = left;
-		Comparable pivotValue = (Comparable) a.get(pivotIndex);
-		swap(a, pivotIndex, right);
-		int storeIndex = left;
-		for (int i = left; i <= right - 1; i++) {
-			if (((Comparable) a.get(i)).compareTo(pivotValue) <= 0) {
-				swap(a, i, storeIndex);
-				storeIndex = storeIndex + 1;
-			}
-		}
-		swap(a, storeIndex, right);
-		return storeIndex;
-	}
-
-	int partition(List<T> a, int left, int right, Comparator<? super T> c) {
-		int pivotIndex = left;
-		T pivotValue = a.get(pivotIndex);
-		swap(a, pivotIndex, right);
-		int storeIndex = left;
-		for (int i = left; i <= right - 1; i++) {
-			if (c.compare(a.get(i), pivotValue) <= 0) {
-				swap(a, i, storeIndex);
-				storeIndex = storeIndex + 1;
-			}
-		}
-		swap(a, storeIndex, right);
-		return storeIndex;
-	}
-	
-	// TODO: Replace with Collections.swap? Test for perf.
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	static void swap(List a, int i, int j) {
-		a.set(i, a.set(j, a.get(i)));
 	}
 	
 	private static Bound createBound(int low, int high) {
