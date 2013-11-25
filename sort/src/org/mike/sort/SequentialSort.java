@@ -41,7 +41,7 @@ public class SequentialSort {
 	public static <T> void quicksort(List<T> a, int left, int right, Comparator<? super T> c) {
 		if (left < right) {
 			if (right - left < MIN_PARITIION) {
-				insertionSort(a, left, right, c);
+				insertionSort(a, left, right, c); // TODO: something here breaks PSRS
 			}
 			else {
 				int pivotIndex = left;
@@ -77,6 +77,73 @@ public class SequentialSort {
 		return storeIndex;
 	}
 	
+	public static <T extends Comparable<? super T>> void quicksort3(List<T> a, int left, int right) {
+		quicksort3(a, left, right, null);
+	}
+
+	public static <T> void quicksort3(List<T> a, int left, int right, Comparator<? super T> c) {
+		int i = left - 1;
+		int j = right;
+		int p = left - 1;
+		int q = right;
+		
+		// TODO: Had to add this, hope its correct.
+		if (right < 0) { 
+			return;
+		}
+		
+		T v = a.get(right);
+		if (right <= left) {
+			return;
+		}
+		
+		while(true) {
+
+			if (c == null) {
+				while (compare(a.get(++i), v) < 0) {
+				}
+				while (compare(v, a.get(--j)) < 0) {
+					if (j == left) {
+						break;
+					}
+				}
+			}
+			else {
+				while (c.compare(a.get(++i), v) < 0) {
+				}
+				while (c.compare(v, a.get(--j)) < 0) {
+					if (j == left) {
+						break;
+					}
+				}
+			}
+			
+			if (i >= j) {
+				break;
+			}
+			swap(a, i, j);
+			if (a.get(i) == v) {
+				p++;
+				swap(a, p, i);
+			}
+			if (v == a.get(j)) {
+				q--;
+				swap(a, j, q);
+			}
+		}
+		swap(a, i, right);
+		j = i - 1;
+		i = i + 1;
+		for (int k = left; k < p; k++, j--) {
+			swap(a, k, j);
+		}
+		for (int k = right - 1; k > q; k--, i++) {
+			swap(a, i, k);
+		}
+		quicksort3(a, left, j, c);
+		quicksort3(a, i, right, c);
+	}
+
 	static <T> void swap(List<T> a, int i1, int i2) {
 		T temp = a.get(i1);
 		a.set(i1, a.get(i2));

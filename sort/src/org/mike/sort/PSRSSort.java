@@ -85,7 +85,7 @@ public final class PSRSSort<T> {
 		
 		// quicksort local list
 		if (debug) System.out.println("p["+p+"] quicksort low["+localBound.low+"] high["+localBound.high+"]");
-		SequentialSort.quicksort(a, localBound.low, localBound.high, c);
+		SequentialSort.quicksort3(a, localBound.low, localBound.high, c);
 //		if (p == 0) System.out.println("local sorted: "+a);
 
 		// sample local list
@@ -96,7 +96,7 @@ public final class PSRSSort<T> {
 		
 		// sort the sample list and obtain the pivots
 		if (p == 0) {
-			SequentialSort.quicksort(samples, 0, samples.size() - 1, c);
+			SequentialSort.quicksort3(samples, 0, samples.size() - 1, c);
 			pivots = getPivots(samples);
 		}
 		barrierAwait(barrier2);

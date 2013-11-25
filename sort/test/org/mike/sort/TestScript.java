@@ -11,7 +11,7 @@ public class TestScript {
 		int iterations = 5;
 		SortStrategy<Integer> psrs = new SortStrategy<Integer>() {
 			public List<Integer> sort(List<Integer> unsorted) {
-				List<Integer> sorted = PCollections.sort(unsorted);
+				List<Integer> sorted = PSRSSort.sort(2, unsorted);
 				return sorted;
 			}
 		};
@@ -29,12 +29,35 @@ public class TestScript {
 				return unsorted;
 			}
 		};
+		
+		SortStrategy<Integer> qsort = new SortStrategy<Integer>() {
+			public List<Integer> sort(List<Integer> unsorted) {
+				SequentialSort.quicksort(unsorted, 0, unsorted.size() - 1);
+				return unsorted;
+			}
+		};
 
-		testSorts("pquicksort", n, pqsort, iterations);		
-		testSorts("pcollections", n, psrs, iterations);
+		SortStrategy<Integer> qsort3 = new SortStrategy<Integer>() {
+			public List<Integer> sort(List<Integer> unsorted) {
+				SequentialSort.quicksort3(unsorted, 0, unsorted.size() - 1);
+				return unsorted;
+			}
+		};
+
+//		List<Integer> list = Harness.createList(n);
+//		List<Integer> sorted = PCollections.sort(list);
+//		for (int i = 0; i < 1000; i++) {
+//			System.out.print(sorted.get(i)+" ");
+//		}
+
+//		testSorts("pquicksort", n, pqsort, iterations);		
+		testSorts("psrs", n, psrs, iterations);
+		testSorts("quicksort3", n, qsort3, iterations);
+//		testSorts("quicksort", n, qsort, iterations);
 		testSorts("collections", n, std, iterations);
 	}
-
+	
+	
 	static <T> long testSorts(String id, int n, SortStrategy<Integer> s, int iterations) {
 		System.out.println(id);
 		List<Long> times = new ArrayList<Long>();
@@ -49,13 +72,21 @@ public class TestScript {
 	}
 	
 	static <T> long testSort(int n, SortStrategy<Integer> s) {
-		List<Integer> list = Harness.createList(n);
-		long start = System.currentTimeMillis();
-		List<Integer> sorted = s.sort(list);
-		long end = System.currentTimeMillis();
-		long time = end - start;
-		Harness.verify(sorted);
-		return time;
+		List<Integer> list = null;
+		try {
+			list = Harness.createList(n);
+			long start = System.currentTimeMillis();
+			List<Integer> sorted = s.sort(list);
+			long end = System.currentTimeMillis();
+			long time = end - start;
+			Harness.verify(sorted);
+			return time;
+		}
+		catch (Exception e) {
+			System.out.println("exception");
+			e.printStackTrace();
+		}
+		return 0;
 	}
 
 	public static long calculateMean(List<Long> set) {

@@ -19,11 +19,12 @@ public class Harness {
 
 	public static void verify(List<Integer> list) {
 		Integer prev = -1;
-		for (Integer i: list) {
-			if (i < prev) {
-				Assert.fail("bad sort! prev["+prev+"] curr["+i+"]");
+		for (int i = 0; i < list.size(); i++) {
+			Integer curr = list.get(i);
+			if (curr < prev) {
+				Assert.fail("bad sort! index["+i+"] prev["+prev+"] curr["+curr+"]");
 			}
-			prev = i;
+			prev = curr;
 		}
 	}
 }
