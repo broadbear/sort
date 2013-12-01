@@ -11,7 +11,7 @@ public class TestScript {
 		int iterations = 5;
 		SortStrategy<Integer> psrs = new SortStrategy<Integer>() {
 			public List<Integer> sort(List<Integer> unsorted) {
-				List<Integer> sorted = PSRSSort.sort(2, unsorted);
+				List<Integer> sorted = PSRSSort.sort(4, unsorted);
 				return sorted;
 			}
 		};
@@ -44,16 +44,10 @@ public class TestScript {
 			}
 		};
 
-//		List<Integer> list = Harness.createList(n);
-//		List<Integer> sorted = PCollections.sort(list);
-//		for (int i = 0; i < 1000; i++) {
-//			System.out.print(sorted.get(i)+" ");
-//		}
-
 //		testSorts("pquicksort", n, pqsort, iterations);		
 		testSorts("psrs", n, psrs, iterations);
 		testSorts("quicksort3", n, qsort3, iterations);
-//		testSorts("quicksort", n, qsort, iterations);
+		testSorts("quicksort", n, qsort, iterations);
 		testSorts("collections", n, std, iterations);
 	}
 	

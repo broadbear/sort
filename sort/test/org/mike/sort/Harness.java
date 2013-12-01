@@ -12,7 +12,7 @@ public class Harness {
 		Random r = new Random();
 		r.setSeed(123);
 		for (int i = 0; i < n; i++) {
-			l.add(r.nextInt(10000));
+			l.add(r.nextInt(1000));
 		}
 		return l;
 	}
