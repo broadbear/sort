@@ -1,6 +1,6 @@
 # sort
 
-Latest jar; sort/dist/lib/psort-0.0.2.jar.
+Latest jar; sort/dist/lib/psort-0.0.3.jar.
 
 ## Parallel sorting playground.
 
