@@ -5,7 +5,7 @@ Latest jar; sort/dist/lib/psort-0.0.3.jar.
 ## Parallel sorting playground.
 
 
-The goal of this project is to create sort algorithms that are faster than the standard Java 
+The goal of this project is to create sort algorithms that are faster than the standard Java 8
 Collections sort method when on a system with multiple cores, and to make them 
 as easy to use as the Collections sort method. I will be optimizing the existing
 algorithms as well as adding new ones over the next several months. I may also
@@ -34,12 +34,11 @@ List<T> sorted = PCollections.sort(List<T> unsorted);
 
 #### Performance demonstration:
 
-Some sample data points: compares sorting 5 million randomly generated Integer 
-instances via Collections.sort() vs PCollections.sort() on a quad core system 
-(probably dual core reported as four with hyper-threading).
+Some sample data points: compares sorting 20 million randomly generated Integer 
+instances via Collections.sort() vs PCollections.sort() on an 8 core system.
 
-+ collections: mean[ 4648 ms ]
-+ pcollections: mean[ 1409 ms ]
++ collections: mean[ 6400 ms ]
++ pcollections: mean[ 2140 ms ]
 
 
 ### Parallel Quicksort
@@ -47,8 +46,7 @@ instances via Collections.sort() vs PCollections.sort() on a quad core system
 #### Overview:
 
 This is an (mostly) in-place sort that promises linear speedup (2 cores, 2x as fast, etc...) 
-up to a small number of cores. I have verfied the algorithm's performance suprasses
-Java Collections sort when used with up to 4 cores. The API is generalized to sort lists of
+up to a small number of cores. The API is generalized to sort lists of
 objects that implement the Comparable interface, as well as being able to take a Comparable
 instance. I'm currently working on a better pivot selection method. Normal quicksort 
 pitfalls apply to this algorithm.
@@ -73,7 +71,7 @@ an insertion sort.
 This is a NON-in-place sort, but it supposedly provides linear speedup up to large
 numbers of cores. Given that even desktops are venturing into the 8-core realm, everyday 
 performance improvement can be substantial. I have verfied the algorithm's 
-performance suprasses Java Collections sort when used with up to 4 cores. This API, too,
+performance surpasses Java 8 Collections sort when used with up to 8 cores. This API, too,
 is generalized for Comparable/Comparator.
 
 #### Usage:
