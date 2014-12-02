@@ -83,3 +83,16 @@ List<Integer> sorted = PSRSSort.sort(int P, List<Integer> unsorted);
 + P = number of child threads to instantiate.
 + unsorted = the list to be sorted.
 + Returns sorted = the sorted list.
+
+### Sorting Arrays
+
+I've created a variant of the PSRS sort to work with arrays. This was an attempt to create code that could take advantage of additional cores on my graphics card using [Aparapi](https://code.google.com/p/aparapi/). Unfortunately, the array version of my algorithm is slower than the Arrays.parallelSort() algorithm bundled with Java 8. In the future, I'll be analyzing whether a sort algorithm is amenable to adaptation for execution on a GPU. GPUs seem to be the best environment for 'data parallel' algorithms; i.e. where the same task is performed on numerous instances of data, such as numeric types in an array (think matrix math). However, I'm not sure if it will work well when instances of data need to be examined in relation to one another.
+
+#### Usage:
+
+```
+int[] sorted = PSRSSortArray.sort(int P, int[] unsorted);
+```
++ P = number of child threads to instantiate.
++ unsorted = the array to be sorted.
++ Returns sorted = the sorted array.
