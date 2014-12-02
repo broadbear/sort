@@ -3,7 +3,7 @@
 
 	<!-- TODO: run junit test cases -->
 
-	<property name="version" value="0.0.2"/>
+	<property name="version" value="0.0.4"/>
 	<property name="src" location="src"/>
 	<property name="doc" location="doc"/>
 	<property name="build" location="build"/>
