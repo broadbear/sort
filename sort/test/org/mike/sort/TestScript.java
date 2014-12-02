@@ -7,11 +7,11 @@ import java.util.List;
 public class TestScript {
 
 	public static void main(String[] args) {
-		int n = 5000000;
-		int iterations = 5;
+		int n = 20000000;
+		int iterations = 1;
 		SortStrategy<Integer> psrs = new SortStrategy<Integer>() {
 			public List<Integer> sort(List<Integer> unsorted) {
-				List<Integer> sorted = PSRSSort.sort(4, unsorted);
+				List<Integer> sorted = PSRSSort.sort(8, unsorted, true);
 				return sorted;
 			}
 		};
@@ -46,9 +46,9 @@ public class TestScript {
 
 //		testSorts("pquicksort", n, pqsort, iterations);		
 		testSorts("psrs", n, psrs, iterations);
-		testSorts("quicksort3", n, qsort3, iterations);
-		testSorts("quicksort", n, qsort, iterations);
-		testSorts("collections", n, std, iterations);
+//		testSorts("quicksort3", n, qsort3, iterations);
+//		testSorts("quicksort", n, qsort, iterations);
+//		testSorts("collections", n, std, iterations);
 	}
 	
 	
@@ -56,7 +56,8 @@ public class TestScript {
 		System.out.println(id);
 		List<Long> times = new ArrayList<Long>();
 		for (int i = 0; i < iterations; i++) {
-			long time = testSort(n, s);
+			List<Integer> list = Harness.createList(n);
+			long time = testSort(list, s);
 			times.add(time);
 			System.out.println("sort["+i+"] time["+time+"]");
 		}
@@ -65,10 +66,8 @@ public class TestScript {
 		return mean;
 	}
 	
-	static <T> long testSort(int n, SortStrategy<Integer> s) {
-		List<Integer> list = null;
+	static <T> long testSort(List<Integer> list, SortStrategy<Integer> s) {
 		try {
-			list = Harness.createList(n);
 			long start = System.currentTimeMillis();
 			List<Integer> sorted = s.sort(list);
 			long end = System.currentTimeMillis();
