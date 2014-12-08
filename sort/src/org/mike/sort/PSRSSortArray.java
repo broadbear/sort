@@ -2,9 +2,11 @@ package org.mike.sort;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
@@ -23,6 +25,14 @@ public final class PSRSSortArray {
 	Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
 	boolean debug = false;
 	boolean perf = false;
+	Comparator<Bound> boundComparator = new Comparator<Bound> () {
+		@Override
+		public int compare(Bound b1, Bound b2) {
+			if (a[b1.low] == a[b2.low]) return 0;
+			else if (a[b1.low] < a[b2.low]) return -1;
+			else return 1;
+		}
+	};
 
 	public static int[] sort(int P, int[] a, boolean debug) {
 		PSRSSortArray psrsSort = new PSRSSortArray(P);
@@ -135,12 +145,18 @@ public final class PSRSSortArray {
 		}
 		barrierAwait(barrier4);
 
+		long myStart = System.currentTimeMillis(); // TODO: remove
 		// each proc iterates own list, merge (insert lowest value in central list, update bound)
-		mergeLocalLists(a, p);
+		mergeWithHeap(p);
 		
-		if (perf && p == 0) {
+//		if (perf && p == 0) {
+//			end = System.currentTimeMillis();
+//			System.out.println("local list merge phase: "+(end - start));
+//			start = System.currentTimeMillis();
+//		}
+		if (perf) {
 			end = System.currentTimeMillis();
-			System.out.println("local list merge phase: "+(end - start));
+			System.out.println("proc["+p+"] local list merge phase: "+(end - myStart));
 			start = System.currentTimeMillis();
 		}
 	}
@@ -221,7 +237,19 @@ public final class PSRSSortArray {
 			addBound(pivots.length, newBound);
 		}
 	}
-	
+
+	/**
+	 * Brute force list merge.
+	 * 
+	 * TODO: list param not needed as a and aFinal are member vars.
+	 * TODO: this could be made more efficient with a heap.
+	 * 
+	 * As is: n elements, k bounds = O(n * k)
+	 * With heap: O(n log k)
+	 * 
+	 * @param list
+	 * @param p
+	 */
 	void mergeLocalLists(int[] list, int p) {
 		List<Bound> boundList = getBoundList(p);
 		int currIndex = findStartIndex(p);
@@ -235,6 +263,32 @@ public final class PSRSSortArray {
 			}
 		}
 	}
+
+	/**
+	 * This method merges a set of local array segments
+	 * with the use of a heap for efficiency. At this point
+	 * several bounds denoting low and high array indexes have
+	 * been populated and associated with a process.
+	 * 
+	 * @param p
+	 */
+	void mergeWithHeap(int p) {
+		List<Bound> boundList = getBoundList(p);
+		int currIndex = findStartIndex(p);
+		PriorityQueue<Bound> heap = new PriorityQueue<Bound>(boundComparator);
+		for (Bound b: boundList) {
+			heap.add(b);
+		}
+		while (!heap.isEmpty()) {
+			Bound b = heap.poll();
+			aFinal[currIndex] = a[b.low];
+			currIndex++;
+			if (b.low < b.high) {
+				b.low++;
+				heap.add(b);
+			}
+		}
+	}
 	
 	int findStartIndex(int p) {
 		int startIndex = 0;
@@ -243,7 +297,7 @@ public final class PSRSSortArray {
 		}
 		return startIndex;
 	}
-	
+
 	int findLocalListSize(int p) {
 		List<Bound> boundList = getBoundList(p);
 		int size = 0;
@@ -253,6 +307,13 @@ public final class PSRSSortArray {
 		return size;
 	}
 	
+	/**
+	 * Seeks the lowest value associated with a collection of bounds.
+	 * The
+	 * 
+	 * @param boundList
+	 * @return
+	 */
 	Bound findNextLowest(List<Bound> boundList) {
 		Bound lowest = null;
 		for (Bound b: boundList) {

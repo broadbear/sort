@@ -92,7 +92,7 @@ public final class PSRSSort<T> {
 		List<T> sample = getSample(localBound.low, localBound.high);
 		samples.addAll(sample);
 		barrierAwait(barrier1);
-		if (debug && p == 0) System.out.println("samples: "+samples);
+		if (debug && p == 0) System.out.println("samples: "+samples.toString());
 		
 		// sort the sample list and obtain the pivots
 		if (p == 0) {
@@ -100,8 +100,8 @@ public final class PSRSSort<T> {
 			pivots = getPivots(samples);
 		}
 		barrierAwait(barrier2);
-		if (debug && p == 0) System.out.println("sorted samples: "+samples);
-		if (debug && p == 0) System.out.println("pivots: "+pivots);
+		if (debug && p == 0) System.out.println("sorted samples: "+samples.toString());
+		if (debug && p == 0) System.out.println("pivots: "+pivots.toString());
 		
 		// store bounds, map of proc specific lists
 		disectLocalList(a, localBound);
