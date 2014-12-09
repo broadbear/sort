@@ -74,9 +74,9 @@ public final class PSRSSort<T> {
 	List<T> parentSort(final List<T> a) {
 		log.debug("enter");
 		this.a = a;
-		System.out.println("creating final array");
+		log.debug("creating final array");
 		this.aFinal = new Integer[a.size()]; // TODO: sometimes some latency here
-		System.out.println("final array created");
+		log.debug("final array created");
 		
 		// TODO: below, something is taking a really long 
 		//   time, sometimes, for some or all threads to start.
@@ -84,18 +84,18 @@ public final class PSRSSort<T> {
 		List<Thread> threads = new ArrayList<Thread>();
 		for (int p = 0; p < P; p++) {
 			final int pTemp = p;
-			System.out.println("proc["+p+"] creating");
+			log.debug("proc["+p+"] creating");
 			Thread t = new Thread(new Runnable() {
 				public void run() {
 					childSort(pTemp);
 				}
 			});
-			System.out.println("proc["+p+"] created");
-			System.out.println("proc["+p+"] starting");
+			log.debug("proc["+p+"] created");
+			log.debug("proc["+p+"] starting");
 			t.setPriority(Thread.MIN_PRIORITY);
 			t.start(); // TODO: seems starting so many threads at once may choke out subsequent threads
 			           // TODO: there is also a problem if there are not enough cores to handle the threads
-			System.out.println("proc["+p+"] started");
+			log.debug("proc["+p+"] started");
 			threads.add(t);
 		}
 		for (Thread t: threads) {
@@ -111,7 +111,7 @@ public final class PSRSSort<T> {
 	}
 	
 	void childSort(int p) {
-		System.out.println("p["+p+"] enter childSort");
+		log.debug("p["+p+"] enter childSort");
 		Bound localBound = getBounds(p);
 
 		long start = 0; long end = 0;
@@ -119,9 +119,9 @@ public final class PSRSSort<T> {
 
 		long sortStart = System.currentTimeMillis();
 		// quicksort local list
-		if (debug) System.out.println("p["+p+"] quicksort low["+localBound.low+"] high["+localBound.high+"]");
+		if (debug) log.debug("p["+p+"] quicksort low["+localBound.low+"] high["+localBound.high+"]");
 		SequentialSort.quicksort3(a, localBound.low, localBound.high, c);
-//		if (p == 0) System.out.println("local sorted: "+a);
+//		if (p == 0) log.debug("local sorted: "+a);
 
 		// sample local list
 		List<T> sample = getSample(localBound.low, localBound.high);
@@ -129,18 +129,18 @@ public final class PSRSSort<T> {
 		
 		if (perf) {
 			end = System.currentTimeMillis();
-			System.out.println("proc["+p+"] parallel sort and sampling phase: "+(end - sortStart));
+			log.debug("proc["+p+"] parallel sort and sampling phase: "+(end - sortStart));
 		}
 
 		barrierAwait(barrier1);
 		
 		if (perf && p == 0) {
 			end = System.currentTimeMillis();
-			System.out.println("parallel sort and sampling phase: "+(end - start));
+			log.debug("parallel sort and sampling phase: "+(end - start));
 			start = System.currentTimeMillis();
 		}
 
-		if (debug && p == 0) System.out.println("samples: "+samples.toString());
+		if (debug && p == 0) log.debug("samples: "+samples.toString());
 
 		// sort the sample list and obtain the pivots
 		if (p == 0) {
@@ -151,12 +151,12 @@ public final class PSRSSort<T> {
 
 		if (perf && p == 0) {
 			end = System.currentTimeMillis();
-			System.out.println("sample sort and pivot generation phase: "+(end - start));
+			log.debug("sample sort and pivot generation phase: "+(end - start));
 			start = System.currentTimeMillis();
 		}
 
-		if (debug && p == 0) System.out.println("sorted samples: "+samples.toString());
-		if (debug && p == 0) System.out.println("pivots: "+pivots.toString());
+		if (debug && p == 0) log.debug("sorted samples: "+samples.toString());
+		if (debug && p == 0) log.debug("pivots: "+pivots.toString());
 		
 		// store bounds, map of proc specific lists
 		disectLocalList(a, localBound);
@@ -164,16 +164,16 @@ public final class PSRSSort<T> {
 
 		if (perf && p == 0) {
 			end = System.currentTimeMillis();
-			System.out.println("local list dissection phase: "+(end - start));
+			log.debug("local list dissection phase: "+(end - start));
 			start = System.currentTimeMillis();
 		}
 
-		if (debug && p == 0) System.out.println("procBoundMap: "+procBoundMap);
+		if (debug && p == 0) log.debug("procBoundMap: "+procBoundMap);
 
 		if (p == 0) {
 			for (int i = 0; i < P; i++) {
 				localListSize[i] = findLocalListSize(i);
-				if (debug) System.out.println("p["+i+"] size["+localListSize[i]+"]");
+				if (debug) log.debug("p["+i+"] size["+localListSize[i]+"]");
 			}
 		}
 		barrierAwait(barrier4);
@@ -184,7 +184,7 @@ public final class PSRSSort<T> {
 
 		if (perf) {
 			end = System.currentTimeMillis();
-			System.out.println("proc["+p+"] local list merge phase: "+(end - mergeStart));
+			log.debug("proc["+p+"] local list merge phase: "+(end - mergeStart));
 		}
 	}
 	
@@ -192,7 +192,7 @@ public final class PSRSSort<T> {
 		Bound b = new Bound();
 		int n = a.size();
 		int elemsPerProc = (int) Math.ceil((float)n / (float)P);
-		if (debug) System.out.println("p["+p+"] bounds n["+n+"] elemsPerProc["+elemsPerProc+"]");
+		if (debug) log.debug("p["+p+"] bounds n["+n+"] elemsPerProc["+elemsPerProc+"]");
 		b.low = p * elemsPerProc;
 		b.high = b.low - 1 + elemsPerProc;
 		if (b.high > a.size() - 1) {
@@ -206,7 +206,7 @@ public final class PSRSSort<T> {
 		int n = a.size();
 		for (int i = 0; i < P; i++) {
 			int index = ((i * n) / (P * P)) + 1 + low;
-			if (debug) System.out.println("i ["+i+"] n ["+n+"] P ["+P+"] b.low ["+low+"] index ["+index+"]");
+			if (debug) log.debug("i ["+i+"] n ["+n+"] P ["+P+"] b.low ["+low+"] index ["+index+"]");
 			if (index > high) {
 				index = high;
 			}
@@ -219,7 +219,7 @@ public final class PSRSSort<T> {
 		List<T> pivots = new ArrayList<T>();
 		for (int i = 1; i < P; i++) {
 			int index = ((i * P) + (int) Math.floor(P / 2));
-			if (debug) System.out.println("i ["+i+"] P ["+P+"] index ["+index+"]");
+			if (debug) log.debug("i ["+i+"] P ["+P+"] index ["+index+"]");
 			if (index > list.size() - 1) {
 				index = list.size() - 1;
 			}

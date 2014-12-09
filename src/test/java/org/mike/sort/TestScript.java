@@ -4,16 +4,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TestScript {
+	static Logger log;
 
 	public static void main(String[] args) {
+		log = LoggerFactory.getLogger(TestScript.class);
 		int n = 20000000;
 		int iterations = 5;
 		SortStrategy<Integer> psrs = new SortStrategy<Integer>() {
 			public List<Integer> sort(List<Integer> unsorted) {
-				System.out.println("sort start");
+				log.debug("sort start");
 				List<Integer> sorted = PSRSSort.sort(8, unsorted, false);
-				System.out.println("sort end");
+				log.debug("sort end");
 				return sorted;
 			}
 		};
@@ -55,18 +60,18 @@ public class TestScript {
 	
 	
 	static <T> long testSorts(String id, int n, SortStrategy<Integer> s, int iterations) {
-		System.out.println(id);
+		log.debug(id);
 		List<Long> times = new ArrayList<Long>();
 		for (int i = 0; i < iterations; i++) {
-			System.out.println("creating input list");
+			log.debug("creating input list");
 			List<Integer> list = Harness.createList(n);
-			System.out.println("input list created");
+			log.debug("input list created");
 			long time = testSort(list, s);
 			times.add(time);
-			System.out.println("sort["+i+"] time["+time+"]");
+			log.debug("sort["+i+"] time["+time+"]");
 		}
 		long mean = calculateMean(times);		
-		System.out.println("mean["+mean+"]");
+		log.debug("mean["+mean+"]");
 		return mean;
 	}
 	
@@ -80,7 +85,7 @@ public class TestScript {
 			return time;
 		}
 		catch (Exception e) {
-			System.out.println("exception");
+			log.debug("exception");
 			e.printStackTrace();
 		}
 		return 0;
