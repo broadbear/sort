@@ -24,7 +24,7 @@ public final class PSRSSortArray {
 	int P;
 	Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
 	boolean debug = false;
-	boolean perf = false;
+	boolean perf = true;
 	Comparator<Bound> boundComparator = new Comparator<Bound> () {
 		@Override
 		public int compare(Bound b1, Bound b2) {

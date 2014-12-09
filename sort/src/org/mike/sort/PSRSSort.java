@@ -7,8 +7,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class PSRSSort<T> {
 	List<T> a;
@@ -23,7 +27,21 @@ public final class PSRSSort<T> {
 	int P;
 	Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
 	boolean debug = false;
+	boolean perf = true;
 	Comparator<? super T> c;
+	Comparator<Bound> boundComparator = new Comparator<Bound> () {
+		@Override
+		public int compare(Bound b1, Bound b2) {
+			if (c == null) {
+				Comparable b1Val = (Comparable) a.get(b1.low);
+				return b1Val.compareTo((Comparable) a.get(b2.low));
+			}
+			else {
+				return c.compare(a.get(b1.low), a.get(b2.low));
+			}			
+		}
+	};
+	final Logger log = LoggerFactory.getLogger(PSRSSort.class);
 
 	public static <T extends Comparable<? super T>> List<T> sort(int P, List<T> a, boolean debug) {
 		PSRSSort<T> psrsSort = new PSRSSort<T>(P);
@@ -54,18 +72,30 @@ public final class PSRSSort<T> {
 	}
 
 	List<T> parentSort(final List<T> a) {
+		log.debug("enter");
 		this.a = a;
-		this.aFinal = new Integer[a.size()];
+		System.out.println("creating final array");
+		this.aFinal = new Integer[a.size()]; // TODO: sometimes some latency here
+		System.out.println("final array created");
 		
+		// TODO: below, something is taking a really long 
+		//   time, sometimes, for some or all threads to start.
+		//   What could it be?
 		List<Thread> threads = new ArrayList<Thread>();
 		for (int p = 0; p < P; p++) {
 			final int pTemp = p;
+			System.out.println("proc["+p+"] creating");
 			Thread t = new Thread(new Runnable() {
 				public void run() {
 					childSort(pTemp);
 				}
 			});
-			t.start();
+			System.out.println("proc["+p+"] created");
+			System.out.println("proc["+p+"] starting");
+			t.setPriority(Thread.MIN_PRIORITY);
+			t.start(); // TODO: seems starting so many threads at once may choke out subsequent threads
+			           // TODO: there is also a problem if there are not enough cores to handle the threads
+			System.out.println("proc["+p+"] started");
 			threads.add(t);
 		}
 		for (Thread t: threads) {
@@ -81,8 +111,13 @@ public final class PSRSSort<T> {
 	}
 	
 	void childSort(int p) {
+		System.out.println("p["+p+"] enter childSort");
 		Bound localBound = getBounds(p);
-		
+
+		long start = 0; long end = 0;
+		if (perf && p == 0) start = System.currentTimeMillis();
+
+		long sortStart = System.currentTimeMillis();
 		// quicksort local list
 		if (debug) System.out.println("p["+p+"] quicksort low["+localBound.low+"] high["+localBound.high+"]");
 		SequentialSort.quicksort3(a, localBound.low, localBound.high, c);
@@ -91,21 +126,48 @@ public final class PSRSSort<T> {
 		// sample local list
 		List<T> sample = getSample(localBound.low, localBound.high);
 		samples.addAll(sample);
-		barrierAwait(barrier1);
-		if (debug && p == 0) System.out.println("samples: "+samples.toString());
 		
+		if (perf) {
+			end = System.currentTimeMillis();
+			System.out.println("proc["+p+"] parallel sort and sampling phase: "+(end - sortStart));
+		}
+
+		barrierAwait(barrier1);
+		
+		if (perf && p == 0) {
+			end = System.currentTimeMillis();
+			System.out.println("parallel sort and sampling phase: "+(end - start));
+			start = System.currentTimeMillis();
+		}
+
+		if (debug && p == 0) System.out.println("samples: "+samples.toString());
+
 		// sort the sample list and obtain the pivots
 		if (p == 0) {
 			SequentialSort.quicksort3(samples, 0, samples.size() - 1, c);
 			pivots = getPivots(samples);
 		}
 		barrierAwait(barrier2);
+
+		if (perf && p == 0) {
+			end = System.currentTimeMillis();
+			System.out.println("sample sort and pivot generation phase: "+(end - start));
+			start = System.currentTimeMillis();
+		}
+
 		if (debug && p == 0) System.out.println("sorted samples: "+samples.toString());
 		if (debug && p == 0) System.out.println("pivots: "+pivots.toString());
 		
 		// store bounds, map of proc specific lists
 		disectLocalList(a, localBound);
 		barrierAwait(barrier3);
+
+		if (perf && p == 0) {
+			end = System.currentTimeMillis();
+			System.out.println("local list dissection phase: "+(end - start));
+			start = System.currentTimeMillis();
+		}
+
 		if (debug && p == 0) System.out.println("procBoundMap: "+procBoundMap);
 
 		if (p == 0) {
@@ -116,8 +178,14 @@ public final class PSRSSort<T> {
 		}
 		barrierAwait(barrier4);
 
+		long mergeStart = System.currentTimeMillis(); // TODO: remove
 		// each proc iterates own list, merge (insert lowest value in central list, update bound)
 		mergeLocalLists(a, p);
+
+		if (perf) {
+			end = System.currentTimeMillis();
+			System.out.println("proc["+p+"] local list merge phase: "+(end - mergeStart));
+		}
 	}
 	
 	Bound getBounds(int p) {
@@ -216,6 +284,24 @@ public final class PSRSSort<T> {
 			currIndex++;
 			if (lowest.low > lowest.high) {
 				boundList.remove(lowest);
+			}
+		}
+	}
+	
+	void mergeWithHeap(int p) {
+		List<Bound> boundList = getBoundList(p);
+		int currIndex = findStartIndex(p);
+		PriorityQueue<Bound> heap = new PriorityQueue<Bound>(boundComparator);
+		for (Bound b: boundList) {
+			heap.add(b);
+		}
+		while (!heap.isEmpty()) {
+			Bound b = heap.poll();
+			aFinal[currIndex] = a.get(b.low);
+			currIndex++;
+			if (b.low < b.high) {
+				b.low++;
+				heap.add(b);
 			}
 		}
 	}

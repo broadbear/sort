@@ -8,10 +8,12 @@ public class TestScript {
 
 	public static void main(String[] args) {
 		int n = 20000000;
-		int iterations = 1;
+		int iterations = 5;
 		SortStrategy<Integer> psrs = new SortStrategy<Integer>() {
 			public List<Integer> sort(List<Integer> unsorted) {
-				List<Integer> sorted = PSRSSort.sort(8, unsorted, true);
+				System.out.println("sort start");
+				List<Integer> sorted = PSRSSort.sort(8, unsorted, false);
+				System.out.println("sort end");
 				return sorted;
 			}
 		};
@@ -48,7 +50,7 @@ public class TestScript {
 		testSorts("psrs", n, psrs, iterations);
 //		testSorts("quicksort3", n, qsort3, iterations);
 //		testSorts("quicksort", n, qsort, iterations);
-//		testSorts("collections", n, std, iterations);
+		testSorts("collections", n, std, iterations);
 	}
 	
 	
@@ -56,7 +58,9 @@ public class TestScript {
 		System.out.println(id);
 		List<Long> times = new ArrayList<Long>();
 		for (int i = 0; i < iterations; i++) {
+			System.out.println("creating input list");
 			List<Integer> list = Harness.createList(n);
+			System.out.println("input list created");
 			long time = testSort(list, s);
 			times.add(time);
 			System.out.println("sort["+i+"] time["+time+"]");
