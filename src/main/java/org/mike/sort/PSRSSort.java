@@ -28,16 +28,16 @@ public final class PSRSSort<T> {
 	Map<Integer, List<Bound>> procBoundMap = new HashMap<Integer, List<Bound>>();
 	boolean debug = false;
 	boolean perf = true;
-	Comparator<? super T> c;
+	Comparator<? super T> comp;
 	Comparator<Bound> boundComparator = new Comparator<Bound> () {
 		@Override
 		public int compare(Bound b1, Bound b2) {
-			if (c == null) {
+			if (comp == null) {
 				Comparable b1Val = (Comparable) a.get(b1.low);
 				return b1Val.compareTo((Comparable) a.get(b2.low));
 			}
 			else {
-				return c.compare(a.get(b1.low), a.get(b2.low));
+				return comp.compare(a.get(b1.low), a.get(b2.low));
 			}			
 		}
 	};
@@ -56,7 +56,7 @@ public final class PSRSSort<T> {
 	
 	public static <T> List<T> sort(int P, List<T> a, Comparator<? super T> c) {
 		PSRSSort<T> psrsSort = new PSRSSort<T>(P);
-		psrsSort.c = c;
+		psrsSort.comp = c;
 		List<T> sortedA = psrsSort.parentSort(a);
 		return sortedA;
 	}
@@ -120,7 +120,7 @@ public final class PSRSSort<T> {
 		long sortStart = System.currentTimeMillis();
 		// quicksort local list
 		if (debug) log.debug("p["+p+"] quicksort low["+localBound.low+"] high["+localBound.high+"]");
-		SequentialSort.quicksort3(a, localBound.low, localBound.high, c);
+		SequentialSort.quicksort3(a, localBound.low, localBound.high, comp);
 //		if (p == 0) log.debug("local sorted: "+a);
 
 		// sample local list
@@ -144,7 +144,7 @@ public final class PSRSSort<T> {
 
 		// sort the sample list and obtain the pivots
 		if (p == 0) {
-			SequentialSort.quicksort3(samples, 0, samples.size() - 1, c);
+			SequentialSort.quicksort3(samples, 0, samples.size() - 1, comp);
 			pivots = getPivots(samples);
 		}
 		barrierAwait(barrier2);
@@ -241,27 +241,13 @@ public final class PSRSSort<T> {
 	void disectLocalList(List<T> list, Bound b) {
 		Bound newBound = new Bound();
 		newBound.low = b.low;
-		for (int i = 0; i <= pivots.size() - 1; i++) {
-			int j = newBound.low;
-			
-			// TODO: Some generics trickery, best we can do? Better than before?
-			if (c == null) {
-				Comparable currPivotValue = (Comparable) pivots.get(i);
-				while (((Comparable) a.get(j)).compareTo(currPivotValue) <= 0 && j <= b.high) {
-					j++;
-				}
-			}
-			else {
-				T currPivotValue = pivots.get(i);
-				while(c.compare(a.get(j), currPivotValue) <= 0 && j <= b.high) {
-					j++;
-				}
-			}
-			
-			newBound.high = j - 1;
-			addBound(i, newBound);
+		for (int pivotIndex = 0; pivotIndex <= pivots.size() - 1; pivotIndex++) {
+			int i = newBound.low;			
+			i = findNextHighBound(pivotIndex, i, b.high);			
+			newBound.high = i - 1;
+			addBound(pivotIndex, newBound);
 			newBound = new Bound();
-			newBound.low = j;
+			newBound.low = i;
 		}
 
 		if (newBound.low < b.high) {
@@ -272,6 +258,23 @@ public final class PSRSSort<T> {
 			newBound.high = i;
 			addBound(pivots.size(), newBound);
 		}
+	}
+
+	// TODO: Some generics trickery, best we can do? Better than before?
+	int findNextHighBound(int pivotIndex, int currIndex, int high) {
+		if (comp == null) {
+			Comparable pivotValue = (Comparable) pivots.get(pivotIndex);
+			while (((Comparable) a.get(currIndex)).compareTo(pivotValue) <= 0 && currIndex <= high) {
+				currIndex++;
+			}
+		}
+		else {
+			T pivotValue = pivots.get(pivotIndex);
+			while(comp.compare(a.get(currIndex), pivotValue) <= 0 && currIndex <= high) {
+				currIndex++;
+			}
+		}
+		return currIndex;
 	}
 	
 	void mergeLocalLists(List<T> list, int p) {
@@ -328,7 +331,7 @@ public final class PSRSSort<T> {
 		for (Bound b: boundList) {
 			
 			// TODO: more generics trickery
-			if (c == null) {
+			if (comp == null) {
 				Comparable currValue = (Comparable) a.get(b.low);
 				if (lowest == null || currValue.compareTo((Comparable) a.get(lowest.low)) < 0) {
 					lowest = b;
@@ -336,7 +339,7 @@ public final class PSRSSort<T> {
 			}
 			else {
 				T currValue = a.get(b.low);
-				if (lowest == null || c.compare(currValue, a.get(lowest.low)) < 0) {
+				if (lowest == null || comp.compare(currValue, a.get(lowest.low)) < 0) {
 					lowest = b;
 				}
 			}
