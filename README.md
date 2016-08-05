@@ -40,7 +40,7 @@ instances via Collections.sort() vs PCollections.sort() on an 8 core system.
 + collections: mean[ 6400 ms ]
 + pcollections: mean[ 2140 ms ]
 
-With 40 million elementsj using 8 cores:
+With 40 million elements using 8 cores:
 
 + collections: mean [ 19759 ms ]
 + pcollections: mean [ 4985 ms ]
